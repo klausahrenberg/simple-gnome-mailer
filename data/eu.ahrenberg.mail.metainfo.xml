@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>eu.ahrenberg.mail</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Postfach</name>
+  <summary>A lean mail client for GNOME</summary>
+  <summary xml:lang="de">Schlanker Mail-Client für GNOME</summary>
+  <description>
+    <p>Postfach is a simple, modern mail client for GNOME with a two-column view, a unified inbox across all accounts and full-text search.</p>
+    <p xml:lang="de">Postfach ist ein einfacher, moderner Mail-Client für GNOME mit Zwei-Spalten-Ansicht, gemeinsamem Posteingang über alle Konten und Volltextsuche.</p>
+    <ul>
+      <li>Several accounts, each with its own color; unified inbox and unified sent folder</li>
+      <li xml:lang="de">Mehrere Konten mit eigener Farbe, gemeinsamer Posteingang und gemeinsamer Gesendet-Ordner</li>
+      <li>IMAP, plus Google and Microsoft 365 through GNOME Online Accounts</li>
+      <li xml:lang="de">IMAP sowie Google und Microsoft 365 über die GNOME-Online-Konten</li>
+      <li>Instant notifications for new mail (IMAP IDLE) and background operation</li>
+      <li xml:lang="de">Sofortige Benachrichtigung bei neuen Mails (IMAP IDLE) und Betrieb im Hintergrund</li>
+      <li>Search with filters such as from:, to:, file:pdf or is:unread</li>
+      <li xml:lang="de">Suche mit Filtern wie von:, an:, file:pdf oder ist:ungelesen</li>
+      <li>Available in English and German</li>
+      <li xml:lang="de">In Deutsch und Englisch verfügbar</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">eu.ahrenberg.mail.desktop</launchable>
+  <provides><binary>postfach</binary></provides>
+  <categories><category>Network</category><category>Email</category></categories>
+  <keywords>
+    <keyword>Mail</keyword><keyword>Email</keyword><keyword>IMAP</keyword><keyword>Inbox</keyword>
+    <keyword xml:lang="de">Posteingang</keyword><keyword xml:lang="de">E-Mail</keyword>
+  </keywords>
+  <url type="homepage">https://github.com/klausahrenberg/simple-gnome-mailer</url>
+  <url type="bugtracker">https://github.com/klausahrenberg/simple-gnome-mailer/issues</url>
+  <url type="vcs-browser">https://github.com/klausahrenberg/simple-gnome-mailer</url>
+  <developer id="eu.ahrenberg"><name>Klaus Ahrenberg</name></developer>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Two-column view with a unified inbox</caption>
+      <caption xml:lang="de">Zwei-Spalten-Ansicht mit gemeinsamem Posteingang</caption>
+      <image type="source">https://raw.githubusercontent.com/klausahrenberg/simple-gnome-mailer/main/data/screenshots/01-zwei-spalten-hell.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Dark mode with an HTML message</caption>
+      <caption xml:lang="de">Dunkelmodus mit HTML-Nachricht</caption>
+      <image type="source">https://raw.githubusercontent.com/klausahrenberg/simple-gnome-mailer/main/data/screenshots/02-zwei-spalten-dunkel.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Collapsible folder tree</caption>
+      <caption xml:lang="de">Klappbarer Ordnerbaum</caption>
+      <image type="source">https://raw.githubusercontent.com/klausahrenberg/simple-gnome-mailer/main/data/screenshots/03-ordnerbaum.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Composing with formatting and attachments</caption>
+      <caption xml:lang="de">Verfassen mit Formatierung und Anhängen</caption>
+      <image type="source">https://raw.githubusercontent.com/klausahrenberg/simple-gnome-mailer/main/data/screenshots/04-verfassen.png</image>
+    </screenshot>
+  </screenshots>
+  <branding>
+    <color type="primary" scheme_preference="light">#8ff0a4</color>
+    <color type="primary" scheme_preference="dark">#1c8a5a</color>
+  </branding>
+  <content_rating type="oars-1.1"/>
+  <supports><control>pointing</control><control>keyboard</control></supports>
+  <requires><display_length compare="ge">360</display_length></requires>
+  <releases><release version="0.1.0" date="2026-10-25"/></releases>
+</component>

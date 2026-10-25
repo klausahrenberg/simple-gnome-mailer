@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "postfach"
+dynamic = ["version"]
+description = "Schlanker IMAP-Mail-Client für GNOME"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Klaus Ahrenberg" }]
+
+[project.urls]
+Homepage = "https://github.com/klausahrenberg/simple-gnome-mailer"
+Issues = "https://github.com/klausahrenberg/simple-gnome-mailer/issues"
+
+[project.scripts]
+postfach = "postfach.app:main"
+
+[tool.setuptools]
+packages = ["postfach", "postfach.ui"]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = { attr = "postfach.__version__" }
+
+[tool.setuptools.package-data]
+postfach = ["icons/hicolor/scalable/*/*.svg", "locale/*/LC_MESSAGES/*.mo"]
+
+[tool.setuptools.data-files]
+"share/applications" = ["data/eu.ahrenberg.mail.desktop"]
+"share/metainfo" = ["data/eu.ahrenberg.mail.metainfo.xml"]
+"share/icons/hicolor/scalable/apps" = [
+  "postfach/icons/hicolor/scalable/apps/eu.ahrenberg.mail.svg",
+  "postfach/icons/hicolor/scalable/apps/eu.ahrenberg.mail-symbolic.svg",
+  "postfach/icons/hicolor/scalable/apps/eu.ahrenberg.mail-unread.svg",
+]

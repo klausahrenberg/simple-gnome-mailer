@@ -1,0 +1,1035 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the postfach package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: postfach\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-25 10:40+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: postfach/app.py:33
+msgid "Fetch mail in the background"
+msgstr ""
+
+#: postfach/app.py:42
+msgid "Start in the background without a window"
+msgstr ""
+
+#: postfach/colors.py:3
+msgid "Blue"
+msgstr ""
+
+#: postfach/colors.py:3
+msgid "Green"
+msgstr ""
+
+#: postfach/colors.py:3
+msgid "Yellow"
+msgstr ""
+
+#: postfach/colors.py:3
+msgid "Orange"
+msgstr ""
+
+#: postfach/colors.py:4
+msgid "Red"
+msgstr ""
+
+#: postfach/colors.py:4
+msgid "Purple"
+msgstr ""
+
+#: postfach/colors.py:4
+msgid "Teal"
+msgstr ""
+
+#: postfach/colors.py:4
+msgid "Brown"
+msgstr ""
+
+#: postfach/composer.py:57
+msgid "%Y-%m-%d at %H:%M"
+msgstr ""
+
+#: postfach/composer.py:61 postfach/ui/reader.py:123
+msgid "%Y-%m-%d %H:%M"
+msgstr ""
+
+#: postfach/composer.py:91
+#, python-brace-format
+msgid "On {when}, {who} wrote:"
+msgstr ""
+
+#: postfach/composer.py:109 postfach/ui/compose.py:189
+msgid "From"
+msgstr ""
+
+#: postfach/composer.py:109
+msgid "Date"
+msgstr ""
+
+#: postfach/composer.py:109 postfach/ui/compose.py:202
+msgid "Subject"
+msgstr ""
+
+#: postfach/composer.py:110 postfach/ui/compose.py:199
+msgid "To"
+msgstr ""
+
+#: postfach/composer.py:112
+msgid "Cc"
+msgstr ""
+
+#: postfach/composer.py:113
+msgid "Forwarded message"
+msgstr ""
+
+#: postfach/goa.py:73
+msgid "Online account no longer exists"
+msgstr ""
+
+#: postfach/goa.py:91
+msgid "No credentials available for the online account"
+msgstr ""
+
+#: postfach/imageshrink.py:12
+msgid "Medium – longest side 1600 px (recommended)"
+msgstr ""
+
+#: postfach/imageshrink.py:12
+msgid "Small – 1024 px"
+msgstr ""
+
+#: postfach/imageshrink.py:12
+msgid "Large – 2400 px"
+msgstr ""
+
+#: postfach/imapsync.py:64 postfach/ui/window.py:178 postfach/ui/window.py:416
+msgid "Inbox"
+msgstr ""
+
+#: postfach/imapsync.py:64 postfach/ui/window.py:367 postfach/ui/window.py:415
+msgid "Sent"
+msgstr ""
+
+#: postfach/imapsync.py:64
+msgid "Drafts"
+msgstr ""
+
+#: postfach/imapsync.py:64
+msgid "Trash"
+msgstr ""
+
+#: postfach/imapsync.py:65
+msgid "Spam"
+msgstr ""
+
+#: postfach/imapsync.py:65 postfach/ui/window.py:198 postfach/ui/window.py:269
+msgid "Archive"
+msgstr ""
+
+#: postfach/imapsync.py:93 postfach/imapsync.py:491
+msgid "Direct Google/Microsoft sign-in is no longer supported – please add the account via GNOME Online Accounts"
+msgstr ""
+
+#: postfach/imapsync.py:98
+msgid "No password saved – please enter it again under Settings → Accounts"
+msgstr ""
+
+#: postfach/imapsync.py:459
+msgid "The account has no drafts folder"
+msgstr ""
+
+#: postfach/imapsync.py:464
+msgid "The server did not accept the draft"
+msgstr ""
+
+#: postfach/imapsync.py:652
+#, python-brace-format
+msgid "Syncing {account} …"
+msgstr ""
+
+#: postfach/mailparse.py:204
+msgid "(no subject)"
+msgstr ""
+
+#: postfach/tray.py:103
+#, python-brace-format
+msgid "Open {app}"
+msgstr ""
+
+#: postfach/tray.py:103 postfach/ui/compose.py:154 postfach/ui/window.py:116
+msgid "New message"
+msgstr ""
+
+#: postfach/tray.py:104 postfach/ui/window.py:315
+msgid "Quit"
+msgstr ""
+
+#: postfach/tray.py:141
+#, python-brace-format
+msgid "{n} unread message"
+msgid_plural "{n} unread messages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/tray.py:141
+msgid "No unread messages"
+msgstr ""
+
+#: postfach/ui/accounts.py:33
+#, python-brace-format
+msgid "Password for {email}"
+msgstr ""
+
+#: postfach/ui/accounts.py:34
+msgid "The saved password is missing or has changed. It is stored securely in the GNOME keyring."
+msgstr ""
+
+#: postfach/ui/accounts.py:35 postfach/ui/accounts.py:130
+msgid "Password"
+msgstr ""
+
+#: postfach/ui/accounts.py:40 postfach/ui/accounts.py:287
+#: postfach/ui/compose.py:313 postfach/ui/window.py:742
+msgid "Cancel"
+msgstr ""
+
+#: postfach/ui/accounts.py:41
+msgid "Save"
+msgstr ""
+
+#: postfach/ui/accounts.py:58
+#, python-brace-format
+msgid "Sign-in failed: {error}"
+msgstr ""
+
+#: postfach/ui/accounts.py:65
+#, python-brace-format
+msgid "Password for {email} saved"
+msgstr ""
+
+#: postfach/ui/accounts.py:79 postfach/ui/accounts.py:87
+#: postfach/ui/window.py:312 postfach/ui/window.py:527
+msgid "Add account"
+msgstr ""
+
+#: postfach/ui/accounts.py:90
+msgid "Choose a provider"
+msgstr ""
+
+#: postfach/ui/accounts.py:90
+msgid "Set up Google and Microsoft accounts in GNOME Online Accounts; they then appear here automatically."
+msgstr ""
+
+#: postfach/ui/accounts.py:93
+msgid "GNOME Online Accounts"
+msgstr ""
+
+#: postfach/ui/accounts.py:93
+msgid "Manage the accounts of the desktop settings (recommended)"
+msgstr ""
+
+#: postfach/ui/accounts.py:95
+msgid "Other IMAP account"
+msgstr ""
+
+#: postfach/ui/accounts.py:95
+msgid "With password"
+msgstr ""
+
+#: postfach/ui/accounts.py:111
+msgid "Enable “Mail” for an account there – it will appear here automatically."
+msgstr ""
+
+#: postfach/ui/accounts.py:115
+msgid "IMAP account"
+msgstr ""
+
+#: postfach/ui/accounts.py:120
+msgid "Create an app password"
+msgstr ""
+
+#: postfach/ui/accounts.py:121
+msgid "Google account → Security → enable 2-step verification, then create an app password and enter it below instead of your normal password."
+msgstr ""
+
+#: postfach/ui/accounts.py:128
+msgid "Name"
+msgstr ""
+
+#: postfach/ui/accounts.py:129
+msgid "Email address"
+msgstr ""
+
+#: postfach/ui/accounts.py:131
+msgid "Username (if different)"
+msgstr ""
+
+#: postfach/ui/accounts.py:132
+msgid "IMAP server"
+msgstr ""
+
+#: postfach/ui/accounts.py:133
+msgid "IMAP port"
+msgstr ""
+
+#: postfach/ui/accounts.py:134
+msgid "SMTP server"
+msgstr ""
+
+#: postfach/ui/accounts.py:135
+msgid "SMTP port (587 STARTTLS / 465 SSL)"
+msgstr ""
+
+#: postfach/ui/accounts.py:141 postfach/ui/accounts.py:195
+msgid "Connect and add"
+msgstr ""
+
+#: postfach/ui/accounts.py:173
+msgid "Ports must be numbers."
+msgstr ""
+
+#: postfach/ui/accounts.py:177
+msgid "Email address, server and password are required."
+msgstr ""
+
+#: postfach/ui/accounts.py:181
+msgid "Connecting …"
+msgstr ""
+
+#: postfach/ui/accounts.py:196
+#, python-brace-format
+msgid "Connection failed: {error}"
+msgstr ""
+
+#: postfach/ui/accounts.py:207 postfach/ui/window.py:313
+msgid "Settings"
+msgstr ""
+
+#: postfach/ui/accounts.py:215 postfach/ui/accounts.py:222
+msgid "Accounts"
+msgstr ""
+
+#: postfach/ui/accounts.py:225
+msgid "GNOME Online Account"
+msgstr ""
+
+#: postfach/ui/accounts.py:226
+msgid "password missing"
+msgstr ""
+
+#: postfach/ui/accounts.py:231
+msgid "Change password …"
+msgstr ""
+
+#: postfach/ui/accounts.py:238
+msgid "Remove account"
+msgstr ""
+
+#: postfach/ui/accounts.py:242
+msgid "Add account …"
+msgstr ""
+
+#: postfach/ui/accounts.py:251
+msgid "Account color"
+msgstr ""
+
+#: postfach/ui/accounts.py:285
+msgid "Remove account?"
+msgstr ""
+
+#: postfach/ui/accounts.py:285
+#, python-brace-format
+msgid "{mail} and the locally stored messages will be removed from this device. Everything on the server stays untouched."
+msgstr ""
+
+#: postfach/ui/accounts.py:288
+msgid "Remove"
+msgstr ""
+
+#: postfach/ui/accounts.py:302
+msgid "View"
+msgstr ""
+
+#: postfach/ui/accounts.py:303 postfach/ui/accounts.py:305
+msgid "Language"
+msgstr ""
+
+#: postfach/ui/accounts.py:305
+msgid "Takes effect after a restart"
+msgstr ""
+
+#: postfach/ui/accounts.py:306
+msgid "System default"
+msgstr ""
+
+#: postfach/ui/accounts.py:311
+#, python-brace-format
+msgid "Restart {app} to apply the language"
+msgstr ""
+
+#: postfach/ui/accounts.py:316
+msgid "Message list"
+msgstr ""
+
+#: postfach/ui/accounts.py:317
+msgid "Preview lines"
+msgstr ""
+
+#: postfach/ui/accounts.py:317
+msgid "Lines of the message text per entry"
+msgstr ""
+
+#: postfach/ui/accounts.py:318
+msgid "2 lines"
+msgstr ""
+
+#: postfach/ui/accounts.py:318
+msgid "3 lines"
+msgstr ""
+
+#: postfach/ui/accounts.py:324
+msgid "Width of the message list (%)"
+msgstr ""
+
+#: postfach/ui/accounts.py:325
+msgid "Can also be changed by dragging the divider between the columns"
+msgstr ""
+
+#: postfach/ui/accounts.py:331
+msgid "Writing messages"
+msgstr ""
+
+#: postfach/ui/accounts.py:332
+msgid "Default format"
+msgstr ""
+
+#: postfach/ui/accounts.py:332
+msgid "Format for new messages"
+msgstr ""
+
+#: postfach/ui/accounts.py:333
+msgid "Formatted (HTML)"
+msgstr ""
+
+#: postfach/ui/accounts.py:333
+msgid "Plain text"
+msgstr ""
+
+#: postfach/ui/accounts.py:337
+msgid "Reply in the format of the original message"
+msgstr ""
+
+#: postfach/ui/accounts.py:338
+msgid "Answer HTML mails as HTML and text mails as text; otherwise the default format applies"
+msgstr ""
+
+#: postfach/ui/accounts.py:342
+msgid "Suggest reducing large images"
+msgstr ""
+
+#: postfach/ui/accounts.py:342
+msgid "When adding attachments if images or the message get too large"
+msgstr ""
+
+#: postfach/ui/accounts.py:346
+msgid "Single image from (MB)"
+msgstr ""
+
+#: postfach/ui/accounts.py:346
+msgid "All attachments from (MB)"
+msgstr ""
+
+#: postfach/ui/accounts.py:352
+msgid "Reading pane"
+msgstr ""
+
+#: postfach/ui/accounts.py:353
+msgid "Load external images automatically"
+msgstr ""
+
+#: postfach/ui/accounts.py:353
+msgid "Can tell senders that you opened the message"
+msgstr ""
+
+#: postfach/ui/accounts.py:357
+msgid "Load sender logos"
+msgstr ""
+
+#: postfach/ui/accounts.py:358
+msgid "For company and service senders (noreply@, info@ …) the logo is fetched from the sender domain's website"
+msgstr ""
+
+#: postfach/ui/accounts.py:362
+msgid "Also use an icon service"
+msgstr ""
+
+#: postfach/ui/accounts.py:363
+#, python-brace-format
+msgid "For domains without a logo of their own, {app} asks DuckDuckGo – DuckDuckGo then learns the sender domains"
+msgstr ""
+
+#: postfach/ui/accounts.py:371 postfach/ui/accounts.py:428
+msgid "Always loaded content"
+msgstr ""
+
+#: postfach/ui/accounts.py:380
+msgid "No sender domain approved"
+msgstr ""
+
+#: postfach/ui/accounts.py:381
+#, python-brace-format
+msgid "{n} sender domain – content loads automatically"
+msgid_plural "{n} sender domains – content loads automatically"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/accounts.py:390
+msgid "Fetching"
+msgstr ""
+
+#: postfach/ui/accounts.py:391
+msgid "Synchronization"
+msgstr ""
+
+#: postfach/ui/accounts.py:393
+msgid "Fetch interval (minutes)"
+msgstr ""
+
+#: postfach/ui/accounts.py:397
+msgid "Messages per folder"
+msgstr ""
+
+#: postfach/ui/accounts.py:398
+msgid "The newest N messages are stored locally and searched"
+msgstr ""
+
+#: postfach/ui/accounts.py:404
+msgid "Background"
+msgstr ""
+
+#: postfach/ui/accounts.py:405
+msgid "Keep running in the background"
+msgstr ""
+
+#: postfach/ui/accounts.py:406
+msgid "Keep fetching mail when the window is closed; reopen via notification or status bar"
+msgstr ""
+
+#: postfach/ui/accounts.py:409
+msgid "Start at login"
+msgstr ""
+
+#: postfach/ui/accounts.py:409
+#, python-brace-format
+msgid "Starts {app} in the background without a window"
+msgstr ""
+
+#: postfach/ui/accounts.py:441
+msgid "External content (images etc.) from these sender domains is loaded automatically. Subdomains are included."
+msgstr ""
+
+#: postfach/ui/accounts.py:446
+msgid "Stop loading automatically"
+msgstr ""
+
+#: postfach/ui/accounts.py:452
+msgid "None"
+msgstr ""
+
+#: postfach/ui/accounts.py:452
+msgid "Add one via “Load” → “Always load from …” in a message"
+msgstr ""
+
+#: postfach/ui/compose.py:172
+msgid "Add attachment … (also by drag and drop or Ctrl+V)"
+msgstr ""
+
+#: postfach/ui/compose.py:175
+msgid "Show/hide the Cc field"
+msgstr ""
+
+#: postfach/ui/compose.py:176
+msgid "Show/hide the Bcc field"
+msgstr ""
+
+#: postfach/ui/compose.py:288
+msgid "Bold"
+msgstr ""
+
+#: postfach/ui/compose.py:289
+msgid "Italic"
+msgstr ""
+
+#: postfach/ui/compose.py:290
+msgid "Underline"
+msgstr ""
+
+#: postfach/ui/compose.py:291
+msgid "Bulleted list"
+msgstr ""
+
+#: postfach/ui/compose.py:292
+msgid "Numbered list"
+msgstr ""
+
+#: postfach/ui/compose.py:297
+msgid "Insert link …"
+msgstr ""
+
+#: postfach/ui/compose.py:310
+msgid "Insert link"
+msgstr ""
+
+#: postfach/ui/compose.py:310
+msgid "Link the selected text to this address:"
+msgstr ""
+
+#: postfach/ui/compose.py:314
+msgid "Insert"
+msgstr ""
+
+#: postfach/ui/compose.py:344
+msgid "Open (right-click: Open with …)"
+msgstr ""
+
+#: postfach/ui/compose.py:352 postfach/ui/reader.py:181
+msgid "Open with …"
+msgstr ""
+
+#: postfach/ui/compose.py:360
+msgid "Remove attachment"
+msgstr ""
+
+#: postfach/ui/compose.py:374 postfach/ui/openfile.py:53
+#, python-brace-format
+msgid "Opening failed: {error}"
+msgstr ""
+
+#: postfach/ui/compose.py:379
+#, python-brace-format
+msgid "“{name}” was not added – attachments would exceed 25 MB"
+msgstr ""
+
+#: postfach/ui/compose.py:390
+#, python-brace-format
+msgid "Reading failed: {error}"
+msgstr ""
+
+#: postfach/ui/compose.py:396
+msgid "Add attachment"
+msgstr ""
+
+#: postfach/ui/compose.py:432
+#, python-brace-format
+msgid "“{name}” is {size} – images over {limit} MB should be reduced before sending."
+msgid_plural "“{name}” ({size}) and {more} more images are large – images over {limit} MB should be reduced before sending."
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/compose.py:436
+#, python-brace-format
+msgid "The attachments total {size} (limit {limit} MB). Many mail servers reject large messages."
+msgstr ""
+
+#: postfach/ui/compose.py:438
+msgid "Reduce image size?"
+msgstr ""
+
+#: postfach/ui/compose.py:438
+msgid "The originals on your computer stay unchanged."
+msgstr ""
+
+#: postfach/ui/compose.py:439
+msgid "Target size"
+msgstr ""
+
+#: postfach/ui/compose.py:446
+msgid "Send originals"
+msgstr ""
+
+#: postfach/ui/compose.py:447
+msgid "Reduce"
+msgstr ""
+
+#: postfach/ui/compose.py:468
+msgid "Reducing images …"
+msgstr ""
+
+#: postfach/ui/compose.py:487
+#, python-brace-format
+msgid "Attachments reduced from {before} to {after}"
+msgstr ""
+
+#: postfach/ui/compose.py:488
+msgid "No reduction possible"
+msgstr ""
+
+#: postfach/ui/compose.py:490
+#, python-brace-format
+msgid "– still over {limit} MB (the other attachments are not images)"
+msgstr ""
+
+#: postfach/ui/compose.py:558
+#, python-brace-format
+msgid "Image-{n}.png"
+msgstr ""
+
+#: postfach/ui/compose.py:559
+msgid "Image added as an attachment"
+msgstr ""
+
+#: postfach/ui/compose.py:569
+#, python-brace-format
+msgid "Editor content could not be read: {error}"
+msgstr ""
+
+#: postfach/ui/compose.py:588
+msgid "Please enter a recipient"
+msgstr ""
+
+#: postfach/ui/compose.py:616
+#, python-brace-format
+msgid "Sending failed: {error}"
+msgstr ""
+
+#: postfach/ui/compose.py:618
+msgid "Message sent"
+msgstr ""
+
+#: postfach/ui/compose.py:652
+msgid "Message not sent"
+msgstr ""
+
+#: postfach/ui/compose.py:652
+msgid "You have already started writing. Discard the message or save it as a draft?"
+msgstr ""
+
+#: postfach/ui/compose.py:654
+msgid "Keep writing"
+msgstr ""
+
+#: postfach/ui/compose.py:655
+msgid "Discard"
+msgstr ""
+
+#: postfach/ui/compose.py:656
+msgid "Save as draft"
+msgstr ""
+
+#: postfach/ui/compose.py:691
+#, python-brace-format
+msgid "Draft not saved: {error}"
+msgstr ""
+
+#: postfach/ui/compose.py:693
+msgid "Draft saved"
+msgstr ""
+
+#: postfach/ui/openfile.py:34
+msgid "Executable files are not opened directly – please save them"
+msgstr ""
+
+#: postfach/ui/reader.py:64
+msgid "Reply (Ctrl+R)"
+msgstr ""
+
+#: postfach/ui/reader.py:65
+msgid "Reply all (Ctrl+Shift+R)"
+msgstr ""
+
+#: postfach/ui/reader.py:66
+msgid "Forward (Ctrl+L)"
+msgstr ""
+
+#: postfach/ui/reader.py:86
+msgid "External content was blocked"
+msgstr ""
+
+#: postfach/ui/reader.py:89
+msgid "Load"
+msgstr ""
+
+#: postfach/ui/reader.py:92 postfach/ui/reader.py:126
+msgid "Always load"
+msgstr ""
+
+#: postfach/ui/reader.py:122
+#, python-brace-format
+msgid "To: {recipients}"
+msgstr ""
+
+#: postfach/ui/reader.py:122
+msgid "hidden recipients (BCC)"
+msgstr ""
+
+#: postfach/ui/reader.py:126
+#, python-brace-format
+msgid "Always load from {domain}"
+msgstr ""
+
+#: postfach/ui/reader.py:148
+#, python-brace-format
+msgid "Content from {domain} will now load automatically"
+msgstr ""
+
+#: postfach/ui/reader.py:161
+msgid "Open"
+msgstr ""
+
+#: postfach/ui/reader.py:169 postfach/ui/reader.py:182
+msgid "Save as …"
+msgstr ""
+
+#: postfach/ui/reader.py:198
+#, python-brace-format
+msgid "Loading “{name}” completely …"
+msgstr ""
+
+#: postfach/ui/reader.py:207
+msgid "Attachment not found"
+msgstr ""
+
+#: postfach/ui/reader.py:228
+#, python-brace-format
+msgid "Saved: {name}"
+msgstr ""
+
+#: postfach/ui/rows.py:43
+msgid "%m-%d"
+msgstr ""
+
+#: postfach/ui/rows.py:44
+msgid "%Y-%m-%d"
+msgstr ""
+
+#: postfach/ui/rows.py:81
+msgid "Remove flag"
+msgstr ""
+
+#: postfach/ui/window.py:121
+#, python-brace-format
+msgid "{n} new message"
+msgid_plural "{n} new messages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/window.py:175
+msgid "Menu (accounts, settings)"
+msgstr ""
+
+#: postfach/ui/window.py:192
+msgid "Fetch (F5)"
+msgstr ""
+
+#: postfach/ui/window.py:193
+msgid "New message (Ctrl+N)"
+msgstr ""
+
+#: postfach/ui/window.py:195
+msgid "Flag"
+msgstr ""
+
+#: postfach/ui/window.py:197 postfach/ui/window.py:270
+msgid "Mark as unread"
+msgstr ""
+
+#: postfach/ui/window.py:199 postfach/ui/window.py:269
+#: postfach/ui/window.py:578 postfach/ui/window.py:580
+msgid "Mark as spam"
+msgstr ""
+
+#: postfach/ui/window.py:201
+msgid "Delete (Del)"
+msgstr ""
+
+#: postfach/ui/window.py:204
+msgid "Search …  from:name  file:pdf"
+msgstr ""
+
+#: postfach/ui/window.py:205
+msgid "Full-text search. Filters: from:anna · from:\"anna smith\" · to:name · subject:text · file:pdf · is:unread · is:flagged"
+msgstr ""
+
+#: postfach/ui/window.py:225 postfach/ui/window.py:539
+msgid "No messages"
+msgstr ""
+
+#: postfach/ui/window.py:242
+msgid "Messages"
+msgstr ""
+
+#: postfach/ui/window.py:264
+msgid "No message selected"
+msgstr ""
+
+#: postfach/ui/window.py:266
+msgid "Several messages selected"
+msgstr ""
+
+#: postfach/ui/window.py:269 postfach/ui/window.py:743
+msgid "Delete"
+msgstr ""
+
+#: postfach/ui/window.py:270
+msgid "Mark as read"
+msgstr ""
+
+#: postfach/ui/window.py:281
+msgid "Reading"
+msgstr ""
+
+#: postfach/ui/window.py:304
+msgid "Mailboxes"
+msgstr ""
+
+#: postfach/ui/window.py:314
+#, python-brace-format
+msgid "About {app}"
+msgstr ""
+
+#: postfach/ui/window.py:364 postfach/ui/window.py:415
+msgid "Unified inbox"
+msgstr ""
+
+#: postfach/ui/window.py:365 postfach/ui/window.py:415
+msgid "Unread"
+msgstr ""
+
+#: postfach/ui/window.py:366 postfach/ui/window.py:415
+msgid "Flagged"
+msgstr ""
+
+#: postfach/ui/window.py:463
+msgid "A lean mail client for GNOME"
+msgstr ""
+
+#: postfach/ui/window.py:468
+msgid "Restart"
+msgstr ""
+
+#: postfach/ui/window.py:525
+msgid "No account yet"
+msgstr ""
+
+#: postfach/ui/window.py:526
+msgid "Add an account via GNOME Online Accounts or IMAP."
+msgstr ""
+
+#: postfach/ui/window.py:535
+msgid "No results"
+msgstr ""
+
+#: postfach/ui/window.py:536
+#, python-brace-format
+msgid "Nothing found for “{query}” in {view}."
+msgstr ""
+
+#: postfach/ui/window.py:578
+msgid "Not spam – back to the inbox"
+msgstr ""
+
+#: postfach/ui/window.py:580
+msgid "Not spam"
+msgstr ""
+
+#: postfach/ui/window.py:592
+#, python-brace-format
+msgid "{n} message selected"
+msgid_plural "{n} messages selected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/window.py:619
+#, python-brace-format
+msgid "The message could not be loaded completely: {error}"
+msgstr ""
+
+#: postfach/ui/window.py:673
+msgid "Server action failed"
+msgstr ""
+
+#: postfach/ui/window.py:708
+#, python-brace-format
+msgid "Failed: {error}"
+msgstr ""
+
+#: postfach/ui/window.py:735
+msgid "The message will be moved to the trash."
+msgid_plural "The messages will be moved to the trash."
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/window.py:737
+msgid "The message will be deleted permanently and cannot be restored."
+msgid_plural "The messages will be deleted permanently and cannot be restored."
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/window.py:740
+#, python-brace-format
+msgid "The messages will be deleted – {k} of them permanently, the rest will go to the trash."
+msgstr ""
+
+#: postfach/ui/window.py:741
+#, python-brace-format
+msgid "Delete message?"
+msgid_plural "Delete {n} messages?"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/window.py:747
+#, python-brace-format
+msgid "Message deleted"
+msgid_plural "{n} messages deleted"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/window.py:753
+msgid "No archive folder in this account"
+msgstr ""
+
+#: postfach/ui/window.py:760
+#, python-brace-format
+msgid "Message archived"
+msgid_plural "{n} messages archived"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/window.py:773
+msgid "No inbox in this account"
+msgstr ""
+
+#: postfach/ui/window.py:775
+#, python-brace-format
+msgid "Message moved back to the inbox"
+msgid_plural "{n} messages moved back to the inbox"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/window.py:779
+msgid "No spam folder in this account, or the message is already in spam"
+msgstr ""
+
+#: postfach/ui/window.py:782
+#, python-brace-format
+msgid "Message moved to the spam folder"
+msgid_plural "{n} messages moved to the spam folder"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/window.py:799
+msgid "Loading the complete message …"
+msgstr ""

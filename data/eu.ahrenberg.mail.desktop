@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Postfach
+Comment=A lean mail client for GNOME
+Comment[de]=Schlanker Mail-Client für GNOME
+Exec=postfach
+Icon=eu.ahrenberg.mail
+Categories=Network;Email;GTK;GNOME;
+StartupWMClass=eu.ahrenberg.mail
+Keywords=Mail;Email;IMAP;Inbox;
+Keywords[de]=Mail;E-Mail;Email;IMAP;Posteingang;Postfach;
+StartupNotify=true
