@@ -22,6 +22,6 @@ pkgbase = postfach
 	optdepends = evolution-data-server: contact photos and address suggestions from GNOME Contacts
 	optdepends = gnome-shell-extension-appindicator: status bar icon
 	source = postfach-0.1.0.tar.gz::https://github.com/klausahrenberg/simple-gnome-mailer/archive/refs/tags/v0.1.0.tar.gz
-	sha256sums = SKIP
+	sha256sums = 6951fffd96a381c25495975ecf22612242b1610b66ea7fd589195f9b22d2fa15
 
 pkgname = postfach

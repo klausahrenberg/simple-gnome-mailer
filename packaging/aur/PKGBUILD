@@ -12,7 +12,7 @@ optdepends=('gnome-online-accounts: Google and Microsoft 365 accounts from the G
             'evolution-data-server: contact photos and address suggestions from GNOME Contacts'
             'gnome-shell-extension-appindicator: status bar icon')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SKIP')   # nach dem Setzen des Tags v$pkgver mit „updpkgsums“ bzw. sha256sum eintragen
+sha256sums=('6951fffd96a381c25495975ecf22612242b1610b66ea7fd589195f9b22d2fa15')
 
 build() {
   cd "simple-gnome-mailer-$pkgver"
