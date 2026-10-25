@@ -1,0 +1,27 @@
+# Maintainer: Klaus Ahrenberg
+pkgname=postfach
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Lean mail client for GNOME (GTK4/libadwaita): unified inbox, full-text search, IMAP and GNOME Online Accounts'
+arch=(any)
+url='https://github.com/klausahrenberg/simple-gnome-mailer'
+license=(GPL-3.0-or-later)
+depends=(python python-gobject python-cairo gtk4 libadwaita webkitgtk-6.0 libsecret gdk-pixbuf2)
+makedepends=(python-build python-installer python-setuptools python-wheel gettext)
+optdepends=('gnome-online-accounts: Google and Microsoft 365 accounts from the GNOME settings'
+            'evolution-data-server: contact photos and address suggestions from GNOME Contacts'
+            'gnome-shell-extension-appindicator: status bar icon')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')   # nach dem Setzen des Tags v$pkgver mit „updpkgsums“ bzw. sha256sum eintragen
+
+build() {
+  cd "simple-gnome-mailer-$pkgver"
+  tools/build_locale.sh        # po/*.po -> postfach/locale/*/LC_MESSAGES/postfach.mo
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "simple-gnome-mailer-$pkgver"
+  python -m installer --destdir="$pkgdir" dist/*.whl
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

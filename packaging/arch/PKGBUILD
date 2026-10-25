@@ -1,4 +1,5 @@
 # Maintainer: Klaus Ahrenberg
+# Nur für lokale Tests aus dem Projektordner (die Veröffentlichung im AUR: packaging/aur/PKGBUILD).
 # Lokales Paket aus dem Projektordner:  cd packaging/arch && makepkg -f   (installieren: sudo pacman -U postfach-*.pkg.tar.zst)
 pkgname=postfach
 pkgver=0.1.0
