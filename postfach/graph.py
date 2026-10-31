@@ -23,7 +23,7 @@ def is_graph(acc):
 
 
 class GraphError(Exception):
-    pass
+    code = None
 
 
 def _request(acc, method, url, body=None, headers=None, raw=False, _retry=True):
@@ -45,7 +45,9 @@ def _request(acc, method, url, body=None, headers=None, raw=False, _retry=True):
         if e.code == 429:
             time.sleep(int(e.headers.get("Retry-After", "5")))
             return _request(acc, method, url, body, headers, raw, _retry=_retry)
-        raise GraphError(f"Microsoft Graph {e.code}: {e.read()[:200].decode(errors='replace')}") from e
+        err = GraphError(f"Microsoft Graph {e.code}: {e.read()[:200].decode(errors='replace')}")
+        err.code = e.code
+        raise err from e
     if raw:
         return payload
     return json.loads(payload) if payload else {}
@@ -101,7 +103,7 @@ def sync_folder(acc, folder, depth, on_batch=None, on_new=None):
     remote = _list_remote(acc, folder, depth)
     rmap = {m["id"]: m for m in remote}
     local = {r["remote_id"]: r for r in c.execute(
-        "SELECT id, remote_id, seen, flagged, date FROM messages WHERE account_id=? AND folder=? AND remote_id IS NOT NULL",
+        "SELECT id, remote_id, seen, flagged, date FROM messages WHERE account_id=? AND folder=? AND remote_id IS NOT NULL AND archived=0",
         (acc["id"], folder))}
     oldest = min((m["receivedDateTime"] for m in remote), default="")
     complete = len(remote) < depth

@@ -8,7 +8,7 @@ import tempfile
 ROOT = __file__.rsplit("/tools/", 1)[0]
 OUT = os.path.join(ROOT, "data", "screenshots")
 tmp = tempfile.mkdtemp()
-env = dict(os.environ, POSTFACH_DEMO="1", XDG_DATA_HOME=tmp, XDG_CONFIG_HOME=tmp, XDG_CACHE_HOME=tmp + "/cache")
+env = dict(os.environ, POSTFACH_DEMO="1", POSTFACH_DATA_DIR=tmp, XDG_DATA_HOME=tmp, XDG_CONFIG_HOME=tmp, XDG_CACHE_HOME=tmp + "/cache")
 subprocess.run([sys.executable, os.path.join(ROOT, "tools", "seed_demo.py")], env=env, check=True, timeout=60)
 os.makedirs(OUT, exist_ok=True)
 shot = os.path.join(ROOT, "tools", "screenshot.py")

@@ -13,6 +13,8 @@ from gi.repository import Adw, Gio, GLib, Gtk, Pango, WebKit
 
 from .. import config, contacts, db, logos, mailparse
 from . import openfile
+from .invitecard import InviteCard
+from .. import invite
 from ..i18n import _
 from ..mailparse import display_subject
 
@@ -72,6 +74,9 @@ class Reader(Gtk.Box):
         head.append(who)
         self.append(head)
 
+        self.invite_card = InviteCard(window)
+        self.append(self.invite_card)
+
         self.atts = Gtk.FlowBox(selection_mode=Gtk.SelectionMode.NONE, max_children_per_line=6,
                                 column_spacing=6, row_spacing=6)
         self.atts.set_margin_start(18)
@@ -122,6 +127,13 @@ class Reader(Gtk.Box):
         self.to.set_text(_("To: {recipients}").format(recipients=row["to_addrs"] or _("hidden recipients (BCC)")))
         self.date.set_text(time.strftime(_("%Y-%m-%d %H:%M"), time.localtime(row["date"] or 0)))
         self._attachments()
+        inv = None
+        if row["has_cal"] and self.raw:
+            try:
+                inv = invite.find(self.raw)
+            except Exception:
+                inv = None
+        self.invite_card.show_invite(inv, row)
         self.domain = self._domain(row["from_addr"])
         self.always_btn.set_label(_("Always load from {domain}").format(domain=self.domain) if self.domain else _("Always load"))
         self.always_btn.set_sensitive(bool(self.domain))

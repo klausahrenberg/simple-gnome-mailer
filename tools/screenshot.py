@@ -1,5 +1,6 @@
 """Startet die App und speichert nach einer Verzögerung einen PNG-Screenshot des Fensters.
 Aufruf: screenshot.py OUT.png [WIDTH HEIGHT] [select=N] [dark]"""
+import os
 import sys
 
 sys.path.insert(0, __file__.rsplit("/tools/", 1)[0])
@@ -67,6 +68,20 @@ def prep():
             ComposeWindow.present = lambda self: (target.append(self), orig(self))
             win.activate_action("win.compose", None)
             GLib.timeout_add(1800, fill_compose)
+        if o.startswith("page=") or o == "tbdialog":     # Einstellungsseite nach Titel bzw. Thunderbird-Import-Dialog
+            from postfach.ui import accounts, storage
+            if o == "tbdialog":
+                storage.thunderbird.find_profiles = lambda: [os.environ["TB_PROFILE"]]
+                GLib.timeout_add(300, lambda: (storage.ThunderbirdDialog(win).present(win), False)[1])
+                continue
+            orig_present = accounts.SettingsDialog.present
+
+            def present(self, parent, _t=o[5:]):
+                for pg in self.get_pages() if hasattr(self, "get_pages") else []:
+                    pass
+                self.set_visible_page_name(_t)
+                return orig_present(self, parent)
+            accounts.SettingsDialog.present = present
         if o in ("settings", "add-account", "compose", "reply"):
             win.activate_action(f"win.{o}", None)
         if o.startswith("search="):

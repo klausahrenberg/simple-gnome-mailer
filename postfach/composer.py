@@ -68,7 +68,7 @@ def _own(accounts):
 def build_reply(row, raw, reply_all=False):
     """-> dict(account_id, to, cc, subject, body_text, body_html|None, in_reply_to, references)"""
     h = mailparse.headers(raw or b"")
-    own = _own(db.accounts())
+    own = _own(db.mail_accounts())
     sender = (row["from_name"], row["from_addr"])
     reply_to = _addrs(h.get("Reply-To")) or [sender]
     from_me = (row["from_addr"] or "").lower() in own

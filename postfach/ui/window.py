@@ -21,6 +21,12 @@ from .rows import MessageItem, MessageRow
 # Demo-Modus (POSTFACH_DEMO=1): kein Konten-/Kontakte-/Netzzugriff – für Screenshots und Entwicklung mit Testdaten
 DEMO = bool(os.environ.get("POSTFACH_DEMO"))
 PAGE = 300
+
+
+def acc_label(acc):
+    return _("Local archive") if acc["kind"] == "local" else acc["email"]
+
+
 ROLE_ORDER = ["inbox", "drafts", "sent", "archive", "junk", "trash"]
 ROLE_ICON = {"inbox": "mail-inbox-symbolic", "drafts": "document-edit-symbolic", "sent": "mail-send-symbolic",
              "archive": "folder-download-symbolic", "junk": "mail-mark-junk-symbolic", "trash": "user-trash-symbolic"}
@@ -56,12 +62,16 @@ class MainWindow(Adw.ApplicationWindow):
         self._reader_enabled(False)
         self._rebuild_drawer()
         self.reload_list()
-        if not db.accounts():
+        self._update_net_status()
+        if not db.mail_accounts():
             GLib.idle_add(self._first_run)
         if not DEMO:
             self.sync.start()
             GLib.timeout_add(1500, self._check_passwords)
         self._load_contacts()
+        if not DEMO:
+            mon = Gio.NetworkMonitor.get_default()      # Verbindung wieder da -> sofort abgleichen statt auf den Takt zu warten
+            mon.connect("network-changed", lambda m, avail: avail and self.sync.request())
         logos.on_ready(self._logos_ready)
         self.connect("close-request", self._on_close)
 
@@ -69,7 +79,7 @@ class MainWindow(Adw.ApplicationWindow):
         """IMAP-Konten ohne gespeichertes Passwort (z. B. nach Umstellung der Kennung): Passwort erfragen."""
         from .. import secrets as keyring
         from .accounts import ask_password
-        missing = [a for a in db.accounts() if a["kind"] == "imap" and keyring.lookup(a["id"], "password") is None]
+        missing = [a for a in db.mail_accounts() if a["kind"] == "imap" and keyring.lookup(a["id"], "password") is None]
         if missing:
             ask_password(self, missing[0], lambda: self._check_passwords())
         return False
@@ -179,6 +189,16 @@ class MainWindow(Adw.ApplicationWindow):
         hb.set_title_widget(self.title)
         self.spinner = Gtk.Spinner()
         hb.pack_end(self.spinner)
+        self.offline = False
+        self.net_box = Gtk.Box(spacing=4, valign=Gtk.Align.CENTER, visible=False)
+        self.net_icon = Gtk.Image.new_from_icon_name("network-offline-symbolic")
+        self.net_label = Gtk.Label()
+        for w in (self.net_icon, self.net_label):
+            w.add_css_class("dim-label")
+        self.net_label.add_css_class("caption")
+        self.net_box.append(self.net_icon)
+        self.net_box.append(self.net_label)
+        hb.pack_end(self.net_box)
         lv.add_top_bar(hb)
 
         # Werkzeugzeile über dem Suchfeld: Abrufen, Verfassen | Stern, Ungelesen, Archivieren, Löschen
@@ -208,7 +228,11 @@ class MainWindow(Adw.ApplicationWindow):
         self.search.set_margin_top(4)
         self.search.set_margin_bottom(8)
         self.search.connect("search-changed", self._on_search)
-        lv.add_top_bar(self.search)
+        self.search.set_margin_end(4)
+        bar = Gtk.Box()
+        bar.append(self.search)
+        bar.append(self._sort_button())
+        lv.add_top_bar(bar)
 
         self.factory = Gtk.SignalListItemFactory()
         self.factory.connect("setup", lambda f, li: li.set_child(MessageRow()))
@@ -337,10 +361,12 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _rebuild_drawer(self):
         counts = db.unread_counts()
+        totals = db.total_counts()
         accs = db.accounts()
-        self._labels = {a["id"]: a["email"] for a in accs}
+        self._labels = {a["id"]: acc_label(a) for a in accs}
         self._colors = {a["id"]: colors.index_for(a, i) for i, a in enumerate(accs)}
         inbox_total = 0
+        all_in = all_sent = 0
         acc_nodes = []
         for a in accs:
             col = self._colors[a["id"]]
@@ -355,23 +381,29 @@ class MainWindow(Adw.ApplicationWindow):
                     acc_unread = n
                 if f["role"] in ("trash", "junk", "drafts", "sent"):
                     n = 0
+                t = totals.get((a["id"], f["name"]), 0)
+                all_in += t if f["role"] == "inbox" else 0
+                all_sent += t if f["role"] == "sent" else 0
                 title = imapsync.folder_title(f["role"], f["name"], f["delim"], f["title"])
                 kids.append(NavNode(f"f:{a['id']}:{f['name']}", title, ROLE_ICON.get(f["role"], "folder-symbolic"),
                                     {"kind": "folder", "account_id": a["id"], "folder": f["name"],
-                                     "title": f"{title} · {a['email']}"}, n))
-            kids += self._folder_tree(a, [f for f in folders if f["role"] == "other"], counts)
-            acc_nodes.append(NavNode(f"acc:{a['id']}", a["email"], None, None, acc_unread, color=col, children=kids, bold=True))
-        top = [NavNode("unified", _("Unified inbox"), "mail-inbox-symbolic", {"kind": "unified"}, inbox_total),
-               NavNode("unread", _("Unread"), "mail-unread-symbolic", {"kind": "unread"}),
-               NavNode("flagged", _("Flagged"), "starred-symbolic", {"kind": "flagged"}),
-               NavNode("sent", _("Sent"), "mail-send-symbolic", {"kind": "sent"})]
+                                     "title": f"{title} · {acc_label(a)}"}, n, total=t))
+            kids += self._folder_tree(a, [f for f in folders if f["role"] == "other"], counts, totals)
+            acc_nodes.append(NavNode(f"acc:{a['id']}", acc_label(a), None, None, acc_unread, color=col, children=kids, bold=True))
+        sc = db.special_counts()
+        top = [NavNode("unified", _("Unified inbox"), "mail-inbox-symbolic", {"kind": "unified"}, inbox_total, total=all_in),
+               NavNode("unread", _("Unread"), "mail-unread-symbolic", {"kind": "unread"}, total=sc["unread"]),
+               NavNode("flagged", _("Flagged"), "starred-symbolic", {"kind": "flagged"}, total=sc["flagged"]),
+               NavNode("sent", _("Sent"), "mail-send-symbolic", {"kind": "sent"}, total=all_sent)]
+        if (n_drafts := db.drafts_count()):        # gemeinsamer Entwürfe-Ordner nur, wenn es Entwürfe gibt
+            top.append(NavNode("drafts", _("Drafts"), "document-edit-symbolic", {"kind": "drafts"}, total=n_drafts))
         self.nav.set_nodes(top + acc_nodes)
         badge.set_count(inbox_total)
         if self.get_application().tray:
             self.get_application().tray.set_unread(inbox_total)
         self._select_drawer_row()
 
-    def _folder_tree(self, acc, folders, counts):
+    def _folder_tree(self, acc, folders, counts, totals):
         """Weitere Ordner als verschachtelte Knoten (Pfad am Trennzeichen geteilt)."""
         root = {}
         for f in folders:
@@ -394,9 +426,10 @@ class MainWindow(Adw.ApplicationWindow):
                 kids = build(ent["kids"], f"{path}/{part}")
                 if f:
                     view = {"kind": "folder", "account_id": acc["id"], "folder": f["name"],
-                            "title": f"{part} · {acc['email']}"}
+                            "title": f"{part} · {acc_label(acc)}"}
                     out.append(NavNode(f"f:{acc['id']}:{f['name']}", part, "folder-symbolic", view,
-                                       counts.get((acc["id"], f["name"]), 0), children=kids))
+                                       counts.get((acc["id"], f["name"]), 0), children=kids,
+                                       total=totals.get((acc["id"], f["name"]), 0)))
                 else:
                     out.append(NavNode(key, part, "folder-symbolic", None, 0, children=kids))
             return out
@@ -412,7 +445,7 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _view_title(self):
         k = self.view.get("kind")
-        return {"unified": _("Unified inbox"), "unread": _("Unread"), "flagged": _("Flagged"), "sent": _("Sent")}.get(k) \
+        return {"unified": _("Unified inbox"), "unread": _("Unread"), "flagged": _("Flagged"), "sent": _("Sent"), "drafts": _("Drafts")}.get(k) \
             or self.view.get("title") or _("Inbox")
 
     def _on_nav_view(self, v):
@@ -489,6 +522,35 @@ class MainWindow(Adw.ApplicationWindow):
         self.sync.refresh_idle()
 
     # --------------------------------------------------------------- Liste
+    def _sort_button(self):
+        """Sortierung der Liste: Menü neben dem Suchfeld (Auswahl wird gespeichert)."""
+        cur = config.get("sort") if config.get("sort") in db.SORTS else "date_desc"
+        act = Gio.SimpleAction.new_stateful("sort", GLib.VariantType("s"), GLib.Variant("s", cur))
+
+        def changed(a, v):
+            a.set_state(v)
+            config.set("sort", v.get_string())
+            self._update_sort_icon()
+            self.reload_list()
+
+        act.connect("activate", changed)
+        self.add_action(act)
+        menu = Gio.Menu()
+        for key, label in (("date_desc", _("Newest first")), ("date_asc", _("Oldest first")),
+                           ("sender", _("Sender (A–Z)")), ("recipient", _("Recipient (A–Z)")),
+                           ("subject", _("Subject (A–Z)")), ("unread", _("Unread first")),
+                           ("flagged", _("Flagged first"))):
+            menu.append(label, f"win.sort::{key}")
+        self.sort_btn = Gtk.MenuButton(menu_model=menu, valign=Gtk.Align.CENTER, tooltip_text=_("Sort"),
+                                       margin_end=10, margin_bottom=4)
+        self.sort_btn.add_css_class("flat")
+        self._update_sort_icon()
+        return self.sort_btn
+
+    def _update_sort_icon(self):
+        self.sort_btn.set_icon_name("view-sort-ascending-symbolic" if config.get("sort") == "date_asc"
+                                    else "view-sort-descending-symbolic")
+
     def reload_list(self):
         self.offset = 0
         self.store.remove_all()
@@ -497,13 +559,14 @@ class MainWindow(Adw.ApplicationWindow):
     def _new_item(self, r, multi):
         it = MessageItem(r, self._labels.get(r["account_id"], "") if multi else "", self._colors.get(r["account_id"]))
         # in Gesendet-Ansichten zählt der Empfänger, nicht der (eigene) Absender
-        it.show_to = self.view.get("kind") == "sent" or (
-            self.view.get("kind") == "folder" and db.folder_by_role(r["account_id"], "sent") == r["folder"])
+        it.show_to = self.view.get("kind") in ("sent", "drafts") or (
+            self.view.get("kind") == "folder" and r["folder"] in (db.folder_by_role(r["account_id"], "sent"),
+                                                                    db.folder_by_role(r["account_id"], "drafts")))
         it.on_star = self._star_item
         return it
 
     def _load_more(self):
-        rows = db.query(self.view, self.search_text, PAGE, self.offset)
+        rows = db.query(self.view, self.search_text, PAGE, self.offset, config.get("sort"))
         multi = self.view.get("kind") != "folder" and len(self._labels) > 1
         self.store.splice(self.store.get_n_items(), 0,
                           [self._new_item(r, multi) for r in rows])
@@ -520,7 +583,7 @@ class MainWindow(Adw.ApplicationWindow):
             self.stack.set_visible_child_name("list")
             return
         self.stack.set_visible_child_name("empty")
-        if not db.accounts():
+        if not db.mail_accounts():
             self.empty.set_icon_name("avatar-default-symbolic")
             self.empty.set_title(_("No account yet"))
             self.empty.set_description(_("Add an account via GNOME Online Accounts or IMAP."))
@@ -644,18 +707,6 @@ class MainWindow(Adw.ApplicationWindow):
         if self._item() is it:
             self._sync_star_icon(it)
 
-    def _bg(self, fn, err_msg):
-        if DEMO:                       # Demo-Modus: keine Serveraktionen
-            return
-
-        def work():
-            try:
-                fn()
-            except Exception as e:
-                msg = f"{err_msg}: {e}"
-                GLib.idle_add(lambda: self.toast(msg) and False)
-        threading.Thread(target=work, daemon=True).start()
-
     def _set_flag(self, items, which, value):
         """Setzt „gelesen“ bzw. „markiert“ für alle Elemente (lokal sofort, auf dem Server gesammelt)."""
         key = "seen" if which == "seen" else "flagged"
@@ -670,7 +721,11 @@ class MainWindow(Adw.ApplicationWindow):
                 self._refresh_item(it)
         finally:
             self._suppress = False
-        self._bg(lambda: imapsync.remote_set_flag(pks, flag, value), _("Server action failed"))
+        for pk in pks:                 # Serveraktion vormerken (wird bei fehlender Verbindung später nachgeholt)
+            m = db.message(pk)
+            if m and not m["archived"] and not DEMO:
+                db.queue_op("flag", pk, f"{flag}:{int(value)}")
+        self.sync.request_ops()
         self._rebuild_drawer_soon()
 
     def _rebuild_drawer_soon(self):
@@ -691,24 +746,20 @@ class MainWindow(Adw.ApplicationWindow):
         if items := self._selected_items():
             self._set_flag(items, "seen", True)
 
-    def _remove_selected(self, remote_fn, msg_fn):
+    def _remove_selected(self, kind, msg_fn):
+        """Löschen/Spam/Archiv: die Nachrichten verschwinden sofort (auch offline); die Serveraktion `kind`
+        (delete | spam | notspam | archive) wird vorgemerkt und ausgeführt, sobald das Konto erreichbar ist."""
         items = self._selected_items()
         if not items:
             return
         pks = [it.pk for it in items]
         positions = self._selected_positions()
         first = positions[0]
-
-        def work():
-            try:
-                remote_fn(pks)
-                for pk in pks:
-                    db.delete_message(pk)
-            except Exception as e:
-                err = _("Failed: {error}").format(error=e)
-                GLib.idle_add(lambda: (self.toast(err), self.reload_list()) and False)
-
-        # optimistisch aus der Liste nehmen; DB-Zeilen bleiben, bis der Server bestätigt hat
+        for it in items:
+            if it.d["archived"] or DEMO:       # nur lokal vorhanden: endgültig löschen
+                db.delete_message(it.pk)
+            else:
+                db.queue_op(kind, it.pk)       # blendet die Nachricht aus, bis der Server bestätigt hat
         self._suppress = True
         try:
             for pos in sorted(positions, reverse=True):
@@ -722,7 +773,8 @@ class MainWindow(Adw.ApplicationWindow):
             self.sel.unselect_all()
             self._on_selected()
             self._update_empty()
-        threading.Thread(target=work, daemon=True).start()
+        self.sync.request_ops()
+        self._rebuild_drawer_soon()
         self.toast(msg_fn(len(pks)))
 
     def _delete(self):
@@ -744,7 +796,7 @@ class MainWindow(Adw.ApplicationWindow):
         d.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
         d.set_default_response("cancel")
         d.set_close_response("cancel")
-        d.connect("response", lambda _d, r: r == "delete" and self._remove_selected(imapsync.remote_delete, lambda n: ngettext("Message deleted", "{n} messages deleted", n).format(n=n)))
+        d.connect("response", lambda _d, r: r == "delete" and self._remove_selected("delete", lambda n: ngettext("Message deleted", "{n} messages deleted", n).format(n=n)))
         d.present(self)
 
     def _archive(self):
@@ -757,7 +809,7 @@ class MainWindow(Adw.ApplicationWindow):
             for i in range(self.store.get_n_items()):
                 if self.store.get_item(i) is it:
                     self.sel.select_item(i, False)
-        self._remove_selected(imapsync.remote_move_archive, lambda n: ngettext("Message archived", "{n} messages archived", n).format(n=n))
+        self._remove_selected("archive", lambda n: ngettext("Message archived", "{n} messages archived", n).format(n=n))
 
     def _select_items(self, items):
         self.sel.unselect_all()
@@ -772,14 +824,18 @@ class MainWindow(Adw.ApplicationWindow):
             if not all(db.folder_by_role(i.d["account_id"], "inbox") for i in items):
                 self.toast(_("No inbox in this account"))
                 return
-            self._remove_selected(imapsync.remote_not_spam, lambda n: ngettext("Message moved back to the inbox", "{n} messages moved back to the inbox", n).format(n=n))
+            self._remove_selected("notspam", lambda n: ngettext("Message moved back to the inbox", "{n} messages moved back to the inbox", n).format(n=n))
             return
-        items = [it for it in items if db.folder_by_role(it.d["account_id"], "junk") and not self._in_junk(it)]
+        # nur lokal gespeicherte Nachrichten (Archiv/Import) haben keinen Spam-Ordner: sie werden gleich gelöscht
+        items = [it for it in items if it.d["archived"] or (db.folder_by_role(it.d["account_id"], "junk") and not self._in_junk(it))]
         if not items:
             self.toast(_("No spam folder in this account, or the message is already in spam"))
             return
         self._select_items(items)
-        self._remove_selected(imapsync.remote_mark_spam, lambda n: ngettext("Message moved to the spam folder", "{n} messages moved to the spam folder", n).format(n=n))
+        local = all(it.d["archived"] for it in items)
+        self._remove_selected("spam", (
+            (lambda n: ngettext("Spam message deleted", "{n} spam messages deleted", n).format(n=n)) if local else
+            (lambda n: ngettext("Message moved to the spam folder", "{n} messages moved to the spam folder", n).format(n=n))))
 
     # -------------------------------------------------------------- Verfassen
     def _compose(self, **kw):
@@ -821,13 +877,37 @@ class MainWindow(Adw.ApplicationWindow):
 
     # ------------------------------------------------------------------- Sync
     def _sync_status(self, state, text):
+        if state == "offline":
+            if not self.offline:               # nur beim Wechsel melden; danach still weiterprüfen
+                self.toast(_("Offline – changes are saved and sent when the connection is back"))
+            self.offline = True
+        elif state in ("online", "sync"):
+            self.offline = False
         busy = state == "sync"
         self.spinner.set_spinning(busy)
         self.spinner.set_tooltip_text(text if busy else None)
+        self._update_net_status()
+
+    def _update_net_status(self):
+        n = db.pending_count()
+        self.net_box.set_visible(self.offline or n > 0)
+        self.net_label.set_text(_("Offline") if self.offline else
+                                ngettext("{n} change waiting", "{n} changes waiting", n).format(n=n))
+        self.net_icon.set_from_icon_name("network-offline-symbolic" if self.offline else "emblem-synchronizing-symbolic")
+        self.net_box.set_tooltip_text(
+            (_("No connection – the app keeps checking quietly.") + " " if self.offline else "")
+            + (ngettext("{n} change will be sent to the server.", "{n} changes will be sent to the server.", n).format(n=n)
+               if n else ""))
 
     def _sync_done(self, acc_id, n, err):
         if err:
-            self.toast(err[:200])
+            key = (acc_id, err)                # gleiche Fehlermeldung je Konto nur einmal zeigen
+            if key != getattr(self, "_last_err", None):
+                self._last_err = key
+                self.toast(err[:200])
+        elif acc_id is not None and not n:
+            self._last_err = None
+        self._update_net_status()
         if (n or not err) and not getattr(self, "_refresh_pending", False):
             self._refresh_pending = True
             GLib.timeout_add(1200, self._refresh_after_sync)

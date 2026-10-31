@@ -6,6 +6,7 @@ import imaplib
 import re
 import select
 import smtplib
+import socket
 import threading
 import time
 
@@ -181,12 +182,12 @@ def sync_folder(im, acc, folder, depth, on_batch=None, on_new=None):
     uidvalidity = int(uv[0]) if uv and uv[0] else None
     row = c.execute("SELECT uidvalidity FROM folders WHERE account_id=? AND name=?", (acc["id"], folder)).fetchone()
     if row and row["uidvalidity"] and uidvalidity and row["uidvalidity"] != uidvalidity:
-        c.execute("DELETE FROM messages WHERE account_id=? AND folder=?", (acc["id"], folder))
+        c.execute("DELETE FROM messages WHERE account_id=? AND folder=? AND archived=0", (acc["id"], folder))
     c.execute("UPDATE folders SET uidvalidity=? WHERE account_id=? AND name=?", (uidvalidity, acc["id"], folder))
     typ, data = im.uid("SEARCH", None, "ALL")
     remote = {int(x) for x in (data[0] or b"").split()}
     local = {r["uid"]: r["id"] for r in
-             c.execute("SELECT uid, id FROM messages WHERE account_id=? AND folder=?", (acc["id"], folder))}
+             c.execute("SELECT uid, id FROM messages WHERE account_id=? AND folder=? AND archived=0", (acc["id"], folder))}
     for uid in set(local) - remote:
         c.execute("DELETE FROM messages WHERE id=?", (local[uid],))
     new = sorted(remote - set(local), reverse=True)
@@ -299,7 +300,7 @@ def sync_account(acc, progress=None, on_batch=None, only_folder=None, on_new=Non
 
 def _with_msg(pk, fn):
     m = db.message(pk)
-    if not m:
+    if not m or m["archived"]:
         return
     acc = db.account(m["account_id"])
     im = connect(acc)
@@ -317,6 +318,7 @@ def fetch_full(pk):
     """Lädt eine nur teilweise synchronisierte (große) Nachricht vollständig nach."""
     if graph.is_graph(db.account(db.message(pk)["account_id"])):
         return
+
     def go(im, acc, m):
         typ, data = im.uid("FETCH", str(m["uid"]), "(BODY.PEEK[])")
         for meta, raw in _fetch_items(data):
@@ -331,7 +333,7 @@ def _with_msgs(pks, fn):
     groups = {}
     for pk in pks:
         m = db.message(pk)
-        if m:
+        if m and not m["archived"]:
             groups.setdefault(m["account_id"], {}).setdefault(m["folder"], []).append(m["uid"])
     for acc_id, folders in groups.items():
         acc = db.account(acc_id)
@@ -350,7 +352,8 @@ def _with_msgs(pks, fn):
 def _split(pks):
     """-> (Graph-Nachrichten, IMAP-Nachrichten)"""
     pks = [pks] if isinstance(pks, int) else list(pks)
-    g = [pk for pk in pks if (m := db.message(pk)) and graph.is_graph(db.account(m["account_id"]))]
+    pks = [pk for pk in pks if (m := db.message(pk)) and not m["archived"]]   # lokal archivierte: nur lokal
+    g = [pk for pk in pks if graph.is_graph(db.account(db.message(pk)["account_id"]))]
     return g, [pk for pk in pks if pk not in g]
 
 
@@ -410,7 +413,7 @@ def remote_move_archive(pks):
         _with_msgs(i, _move_or_delete("archive"))
 
 
-def build_message(acc, to, cc, subject, body, in_reply_to=None, references=None, html=None, attachments=None, bcc=None):
+def build_message(acc, to, cc, subject, body, in_reply_to=None, references=None, html=None, attachments=None, bcc=None, ics=None):
     """Fertige MIME-Nachricht (Text, optional HTML mit eingebetteten Bildern, Anhänge)."""
     msg = email.message.EmailMessage()
     msg["From"] = email.utils.formataddr((acc["name"] or "", acc["email"]))
@@ -442,6 +445,8 @@ def build_message(acc, to, cc, subject, body, in_reply_to=None, references=None,
                             + html + "</body></html>", subtype="html")
         for cid, ctype, data in images:
             msg.get_body(("html",)).add_related(data, *ctype.split("/", 1), cid=cid)
+    if ics:                                     # Terminantwort: text/calendar; method=REPLY
+        msg.add_alternative(ics[1], subtype="calendar", params={"method": ics[0]})
     for fname, ctype, data in attachments or []:
         maintype, _, subtype = (ctype or "application/octet-stream").partition("/")
         msg.add_attachment(data, maintype=maintype, subtype=subtype or "octet-stream", filename=fname)
@@ -469,8 +474,8 @@ def save_draft(acc, *args, **kw):
             pass
 
 
-def send_mail(acc, to, cc, subject, body, in_reply_to=None, references=None, html=None, attachments=None, bcc=None):
-    msg = build_message(acc, to, cc, subject, body, in_reply_to, references, html, attachments, bcc)
+def send_mail(acc, to, cc, subject, body, in_reply_to=None, references=None, html=None, attachments=None, bcc=None, ics=None):
+    msg = build_message(acc, to, cc, subject, body, in_reply_to, references, html, attachments, bcc, ics)
     if graph.is_graph(acc):
         graph.send_mime(acc, msg.as_bytes())
         return
@@ -528,7 +533,7 @@ class IdleWatcher(threading.Thread):
         delay = 15
         while not self.stop_flag.is_set():
             acc = db.account(self.acc_id)
-            if not acc:
+            if not acc or acc["kind"] == "local":
                 return
             if graph.is_graph(acc):
                 return                      # Graph: kein IDLE, Abruf im Intervall
@@ -589,6 +594,11 @@ class SyncManager:
         self._all = False
         self._idle = {}
         self._folder_reqs = []
+        self.online = True             # False: letzter Verbindungsversuch scheiterte (stiller Wiederholungstest)
+        self._offline_tries = 0
+        self._ops = False
+        self._archive_due = 0          # Zeitpunkt des nächsten automatischen Archivlaufs
+        self._archive_now = False
         self._lock = threading.Lock()
         self.thread = threading.Thread(target=self._run, daemon=True, name="sync")
 
@@ -616,9 +626,68 @@ class SyncManager:
                 self._folder_reqs.append((account_id, folder))
         self._wake.set()
 
+    def request_ops(self):
+        """Neue lokale Aktionen (löschen, Spam, Flags …) zum Server übertragen – ohne vollen Abgleich."""
+        self._ops = True
+        self._wake.set()
+
+    def _probe(self):
+        """Ist irgendein Konto erreichbar? (nur TCP-Verbindung, kein Login)"""
+        for acc in db.mail_accounts():
+            host = acc["imap_host"] or "graph.microsoft.com"
+            port = (acc["imap_port"] or 993) if acc["imap_host"] else 443
+            try:
+                socket.create_connection((host, port), timeout=5).close()
+                return True
+            except OSError:
+                continue
+        return not db.mail_accounts()
+
+    def _go_offline(self):
+        if self.online:
+            self.online = False
+            self.on_status("offline", "")
+        self._offline_tries += 1
+
+    def _go_online(self):
+        self.online, self._offline_tries = True, 0
+        self.on_status("online", "")
+
+    def _process_ops(self):
+        """-> True, wenn online weitergearbeitet werden kann."""
+        from . import ops
+        if not db.pending_count():
+            return True
+        offline, error = ops.process()
+        if offline:
+            self._go_offline()
+            return False
+        if error:
+            self.on_done(None, 0, error)
+        self.on_done(None, 1, None)                # Liste neu aufbauen
+        return True
+
+    def request_archive(self):
+        """Archivlauf sofort anstoßen (Einstellungen: „Jetzt archivieren“)."""
+        self._archive_now = True
+        self._wake.set()
+
+    def _maybe_archive(self):
+        manual, self._archive_now = self._archive_now, False
+        if not manual and (not config.get("archive_enabled") or time.time() < self._archive_due):
+            return
+        self._archive_due = time.time() + 6 * 3600
+        from . import archive
+        self.on_status("sync", _("Archiving old messages …"))
+        n, errors = archive.run(lambda k: self.on_status("sync", _("Archiving old messages … {n}").format(n=k)))
+        if n:
+            self.on_done(None, n, None)
+        for e in errors:
+            self.on_done(None, 0, e)
+
     def refresh_idle(self):
         """Startet/stoppt IDLE-Watcher passend zu den vorhandenen Konten."""
-        ids = {a["id"] for a in db.accounts()}
+        ids = {a["id"] for a in db.mail_accounts()}
         for i in list(self._idle):
             if i not in ids or not self._idle[i].is_alive():
                 self._idle.pop(i).stop()
@@ -631,28 +700,54 @@ class SyncManager:
         first = True
         while not self._stop:
             if not first:
-                self._wake.wait(max(1, int(config.get("sync_interval_min"))) * 60)
+                wait = min(30 * 2 ** self._offline_tries, 300) if not self.online else max(1, int(config.get("sync_interval_min"))) * 60
+                self._wake.wait(wait)
             first = False
             self._wake.clear()
             if self._stop:
                 break
             with self._lock:
                 only = set(self._only)
+                ops_only = self._ops and not (self._all or only or self._folder_reqs)
                 full = self._all or bool(only) or not self._folder_reqs
                 reqs, self._folder_reqs = self._folder_reqs, []
-                self._only, self._all = set(), False
+                self._only, self._all, self._ops = set(), False, False
+            if not self.online and not self._probe():      # weiterhin offline: still erneut versuchen
+                self._go_offline()
+                continue
+            try:
+                if not self._process_ops():
+                    continue
+            except Exception as e:
+                self.on_done(None, 0, str(e))
+            if not self.online:
+                self._go_online()
+            if ops_only:
+                self.on_status("idle", "")
+                continue
             self.refresh_idle()
             jobs = [(db.account(i), f) for i, f in reqs]
             if full:
-                jobs += [(a, None) for a in db.accounts() if not only or a["id"] in only]
+                jobs += [(a, None) for a in db.mail_accounts() if not only or a["id"] in only]
+            from . import ops
             for acc, folder in jobs:
-                if acc is None:
+                if acc is None or acc["kind"] == "local":
                     continue
                 try:
                     self.on_status("sync", _("Syncing {account} …").format(account=acc["email"]))
-                    n = sync_account(acc, lambda t: t and self.on_status("sync", t),
-                                     on_batch=lambda k, i=acc["id"]: self.on_done(i, k, None), only_folder=folder, on_new=self.on_new)
+                    sync_account(acc, lambda t: t and self.on_status("sync", t),
+                                 on_batch=lambda k, i=acc["id"]: self.on_done(i, k, None), only_folder=folder, on_new=self.on_new)
                     self.on_done(acc["id"], 0, None)
                 except Exception as e:  # Netz/Anmeldung usw. dürfen die Schleife nicht beenden
+                    if ops.is_network_error(e):         # offline: einmal melden, danach still prüfen
+                        self._go_offline()
+                        break
                     self.on_done(acc["id"], 0, f"{acc['email']}: {e}")
+            if not self.online:
+                continue
+            try:
+                self._maybe_archive()
+            except Exception as e:
+                if not ops.is_network_error(e):
+                    self.on_done(None, 0, str(e))
             self.on_status("idle", "")

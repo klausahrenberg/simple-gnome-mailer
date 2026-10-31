@@ -210,6 +210,8 @@ class SettingsDialog(Adw.PreferencesDialog):
         self._build_accounts()
         self._build_view()
         self._build_sync()
+        from .storage import build_pages
+        build_pages(self)
 
     def _build_accounts(self):
         self.page_acc = Adw.PreferencesPage(title=_("Accounts"), icon_name="avatar-default-symbolic")
@@ -222,7 +224,8 @@ class SettingsDialog(Adw.PreferencesDialog):
         self.grp_acc = Adw.PreferencesGroup(title=_("Accounts"))
         for i, a in enumerate(db.accounts()):
             missing = a["kind"] == "imap" and keyring.lookup(a["id"], "password") is None
-            r = Adw.ActionRow(title=a["email"], subtitle={"goa": _("GNOME Online Account")}.get(a["kind"], "IMAP")
+            r = Adw.ActionRow(title=_("Local archive") if a["kind"] == "local" else a["email"],
+                              subtitle={"goa": _("GNOME Online Account"), "local": _("Stored on this device only")}.get(a["kind"], "IMAP")
                               + (" – " + _("password missing") if missing else ""))
             if missing:
                 r.add_css_class("error")
@@ -232,7 +235,7 @@ class SettingsDialog(Adw.PreferencesDialog):
                 k.add_css_class("flat")
                 k.connect("clicked", lambda _b, a=a: ask_password(self, a, self._fill_accounts))
                 r.add_suffix(k)
-            if a["kind"] != "goa":
+            if a["kind"] not in ("goa", "local"):
                 b = Gtk.Button(icon_name="user-trash-symbolic", valign=Gtk.Align.CENTER)
                 b.add_css_class("flat")
                 b.set_tooltip_text(_("Remove account"))
@@ -283,7 +286,8 @@ class SettingsDialog(Adw.PreferencesDialog):
 
     def _remove(self, _b, acc_id, mail):
         d = Adw.AlertDialog(heading=_("Remove account?"), body=_("{mail} and the locally stored messages "
-                            "will be removed from this device. Everything on the server stays untouched.").format(mail=mail))
+                            "will be removed from this device, except messages archived locally, which move to the local archive. "
+                            "Everything on the server stays untouched.").format(mail=mail))
         d.add_response("cancel", _("Cancel"))
         d.add_response("remove", _("Remove"))
         d.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)

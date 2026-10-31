@@ -8,12 +8,14 @@ from .. import config
 
 
 class NavNode(GObject.Object):
-    count = GObject.Property(type=int, default=0)
+    count = GObject.Property(type=int, default=0)     # ungelesen
+    total = GObject.Property(type=int, default=0)     # alle Nachrichten
 
-    def __init__(self, key, label, icon=None, view=None, count=0, color=None, children=None, bold=False):
+    def __init__(self, key, label, icon=None, view=None, count=0, color=None, children=None, bold=False, total=0):
         super().__init__()
         self.key, self.label, self.icon, self.view, self.color, self.bold = key, label, icon, view, color, bold
         self.count = count
+        self.total = total
         self.kids = children or []
 
 
@@ -49,10 +51,13 @@ class NavTree:
         box.dot = Gtk.Box(valign=Gtk.Align.CENTER, halign=Gtk.Align.CENTER)
         box.dot.add_css_class("acc-dot")
         box.label = Gtk.Label(xalign=0, hexpand=True, ellipsize=Pango.EllipsizeMode.END)
-        box.count = Gtk.Label()
-        box.count.add_css_class("dim-label")
-        box.count.add_css_class("caption")
-        for w in (box.icon, box.dot, box.label, box.count):
+        box.count = Gtk.Label()          # ungelesen: hervorgehoben
+        box.count.add_css_class("caption-heading")
+        box.count.add_css_class("accent")
+        box.total = Gtk.Label()          # alle Nachrichten: gedämpft
+        box.total.add_css_class("dim-label")
+        box.total.add_css_class("caption")
+        for w in (box.icon, box.dot, box.label, box.count, box.total):
             box.append(w)
         exp.set_child(box)
         li.set_child(exp)
@@ -74,16 +79,18 @@ class NavTree:
 
         def upd(*_):
             box.count.set_text(str(node.count) if node.count else "")
+            box.total.set_text(str(node.total) if node.total else "")
 
         upd()
-        box._node, box._cid = node, node.connect("notify::count", upd)
+        box._node, box._cid = node, (node.connect("notify::count", upd), node.connect("notify::total", upd))
         exp._rid = row.connect("notify::expanded", lambda r, _p, key=node.key: self._on_expanded(key, r.get_expanded()))
 
     def _unbind(self, _f, li):
         exp = li.get_child()
         box = exp.get_child()
         if getattr(box, "_node", None):
-            box._node.disconnect(box._cid)
+            for cid in box._cid:
+                box._node.disconnect(cid)
             box._node = None
         row = li.get_item()
         if row is not None and getattr(exp, "_rid", None):
@@ -104,8 +111,11 @@ class NavTree:
         if sig == self._sig:
             old = {n.key: n for n, _ in _flatten(self._nodes)}
             for n, _ in flat:
-                if n.key in old and old[n.key].count != n.count:
-                    old[n.key].count = n.count
+                if n.key in old:
+                    if old[n.key].count != n.count:
+                        old[n.key].count = n.count
+                    if old[n.key].total != n.total:
+                        old[n.key].total = n.total
             return
         self._sig, self._nodes = sig, nodes
         if self._expanded is None:

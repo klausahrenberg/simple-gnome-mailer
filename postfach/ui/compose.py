@@ -154,7 +154,7 @@ class ComposeWindow(Adw.Window):
         super().__init__(transient_for=parent, default_width=760, default_height=700, title=_("New message"))
         self.parent_win = parent
         self.in_reply_to, self.references = in_reply_to, references
-        self.accs = list(db.accounts())
+        self.accs = list(db.mail_accounts())
         self.attachments = list(attachments or [])
         self.web = None
         self.html_mode = body_html is not None

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postfach\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-25 10:40+0100\n"
+"POT-Creation-Date: 2026-10-31 07:28+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -62,7 +62,7 @@ msgstr ""
 msgid "%Y-%m-%d at %H:%M"
 msgstr ""
 
-#: postfach/composer.py:61 postfach/ui/reader.py:123
+#: postfach/composer.py:61 postfach/ui/reader.py:128
 msgid "%Y-%m-%d %H:%M"
 msgstr ""
 
@@ -115,52 +115,227 @@ msgstr ""
 msgid "Large – 2400 px"
 msgstr ""
 
-#: postfach/imapsync.py:64 postfach/ui/window.py:178 postfach/ui/window.py:416
+#: postfach/imapsync.py:65 postfach/ui/storage.py:206
+#: postfach/ui/storage.py:214 postfach/ui/window.py:187
+#: postfach/ui/window.py:448
 msgid "Inbox"
 msgstr ""
 
-#: postfach/imapsync.py:64 postfach/ui/window.py:367 postfach/ui/window.py:415
+#: postfach/imapsync.py:65 postfach/ui/storage.py:206
+#: postfach/ui/storage.py:214 postfach/ui/window.py:396
+#: postfach/ui/window.py:447
 msgid "Sent"
 msgstr ""
 
-#: postfach/imapsync.py:64
+#: postfach/imapsync.py:65 postfach/ui/window.py:398 postfach/ui/window.py:447
 msgid "Drafts"
 msgstr ""
 
-#: postfach/imapsync.py:64
+#: postfach/imapsync.py:65
 msgid "Trash"
 msgstr ""
 
-#: postfach/imapsync.py:65
+#: postfach/imapsync.py:66
 msgid "Spam"
 msgstr ""
 
-#: postfach/imapsync.py:65 postfach/ui/window.py:198 postfach/ui/window.py:269
+#: postfach/imapsync.py:66 postfach/ui/window.py:217 postfach/ui/window.py:292
 msgid "Archive"
 msgstr ""
 
-#: postfach/imapsync.py:93 postfach/imapsync.py:491
+#: postfach/imapsync.py:94 postfach/imapsync.py:496
 msgid "Direct Google/Microsoft sign-in is no longer supported – please add the account via GNOME Online Accounts"
 msgstr ""
 
-#: postfach/imapsync.py:98
+#: postfach/imapsync.py:99
 msgid "No password saved – please enter it again under Settings → Accounts"
 msgstr ""
 
-#: postfach/imapsync.py:459
+#: postfach/imapsync.py:464
 msgid "The account has no drafts folder"
 msgstr ""
 
-#: postfach/imapsync.py:464
+#: postfach/imapsync.py:469
 msgid "The server did not accept the draft"
 msgstr ""
 
-#: postfach/imapsync.py:652
+#: postfach/imapsync.py:681
+msgid "Archiving old messages …"
+msgstr ""
+
+#: postfach/imapsync.py:682
+#, python-brace-format
+msgid "Archiving old messages … {n}"
+msgstr ""
+
+#: postfach/imapsync.py:737
 #, python-brace-format
 msgid "Syncing {account} …"
 msgstr ""
 
-#: postfach/mailparse.py:204
+#: postfach/invite.py:35
+msgid "Monday"
+msgstr ""
+
+#: postfach/invite.py:35
+msgid "Tuesday"
+msgstr ""
+
+#: postfach/invite.py:35
+msgid "Wednesday"
+msgstr ""
+
+#: postfach/invite.py:35
+msgid "Thursday"
+msgstr ""
+
+#: postfach/invite.py:35
+msgid "Friday"
+msgstr ""
+
+#: postfach/invite.py:35
+msgid "Saturday"
+msgstr ""
+
+#: postfach/invite.py:35
+msgid "Sunday"
+msgstr ""
+
+#: postfach/invite.py:36
+msgid "January"
+msgstr ""
+
+#: postfach/invite.py:36
+msgid "February"
+msgstr ""
+
+#: postfach/invite.py:36
+msgid "March"
+msgstr ""
+
+#: postfach/invite.py:36
+msgid "April"
+msgstr ""
+
+#: postfach/invite.py:36
+msgid "May"
+msgstr ""
+
+#: postfach/invite.py:36
+msgid "June"
+msgstr ""
+
+#: postfach/invite.py:36
+msgid "July"
+msgstr ""
+
+#: postfach/invite.py:36
+msgid "August"
+msgstr ""
+
+#: postfach/invite.py:37
+msgid "September"
+msgstr ""
+
+#: postfach/invite.py:37
+msgid "October"
+msgstr ""
+
+#: postfach/invite.py:37
+msgid "November"
+msgstr ""
+
+#: postfach/invite.py:37
+msgid "December"
+msgstr ""
+
+#: postfach/invite.py:247
+#, python-brace-format
+msgid "{weekday}, {month} {day}, {year}"
+msgstr ""
+
+#: postfach/invite.py:270
+msgid "daily"
+msgstr ""
+
+#: postfach/invite.py:270
+msgid "weekly"
+msgstr ""
+
+#: postfach/invite.py:270
+msgid "monthly"
+msgstr ""
+
+#: postfach/invite.py:270
+msgid "yearly"
+msgstr ""
+
+#: postfach/invite.py:272
+msgid "Repeats"
+msgstr ""
+
+#: postfach/invite.py:274
+#, python-brace-format
+msgid "Repeats {freq}"
+msgstr ""
+
+#: postfach/invite.py:275
+msgid "day"
+msgid_plural "days"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/invite.py:275
+msgid "week"
+msgid_plural "weeks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/invite.py:276
+msgid "month"
+msgid_plural "months"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/invite.py:276
+msgid "year"
+msgid_plural "years"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/invite.py:277
+#, python-brace-format
+msgid "Repeats every {n} {unit}"
+msgstr ""
+
+#: postfach/invite.py:327
+msgid "Accepted"
+msgstr ""
+
+#: postfach/invite.py:327
+msgid "Tentative"
+msgstr ""
+
+#: postfach/invite.py:327
+msgid "Declined"
+msgstr ""
+
+#: postfach/invite.py:332
+#, python-brace-format
+msgid "I will attend: {summary}"
+msgstr ""
+
+#: postfach/invite.py:332
+#, python-brace-format
+msgid "I might attend: {summary}"
+msgstr ""
+
+#: postfach/invite.py:333
+#, python-brace-format
+msgid "I cannot attend: {summary}"
+msgstr ""
+
+#: postfach/mailparse.py:207
 msgid "(no subject)"
 msgstr ""
 
@@ -169,11 +344,11 @@ msgstr ""
 msgid "Open {app}"
 msgstr ""
 
-#: postfach/tray.py:103 postfach/ui/compose.py:154 postfach/ui/window.py:116
+#: postfach/tray.py:103 postfach/ui/compose.py:154 postfach/ui/window.py:125
 msgid "New message"
 msgstr ""
 
-#: postfach/tray.py:104 postfach/ui/window.py:315
+#: postfach/tray.py:104 postfach/ui/window.py:338
 msgid "Quit"
 msgstr ""
 
@@ -201,8 +376,9 @@ msgstr ""
 msgid "Password"
 msgstr ""
 
-#: postfach/ui/accounts.py:40 postfach/ui/accounts.py:287
-#: postfach/ui/compose.py:313 postfach/ui/window.py:742
+#: postfach/ui/accounts.py:40 postfach/ui/accounts.py:291
+#: postfach/ui/compose.py:313 postfach/ui/invitecard.py:140
+#: postfach/ui/storage.py:96 postfach/ui/window.py:793
 msgid "Cancel"
 msgstr ""
 
@@ -221,7 +397,7 @@ msgid "Password for {email} saved"
 msgstr ""
 
 #: postfach/ui/accounts.py:79 postfach/ui/accounts.py:87
-#: postfach/ui/window.py:312 postfach/ui/window.py:527
+#: postfach/ui/window.py:335 postfach/ui/window.py:589
 msgid "Add account"
 msgstr ""
 
@@ -314,242 +490,251 @@ msgstr ""
 msgid "Connection failed: {error}"
 msgstr ""
 
-#: postfach/ui/accounts.py:207 postfach/ui/window.py:313
+#: postfach/ui/accounts.py:207 postfach/ui/window.py:336
 msgid "Settings"
 msgstr ""
 
-#: postfach/ui/accounts.py:215 postfach/ui/accounts.py:222
+#: postfach/ui/accounts.py:217 postfach/ui/accounts.py:224
 msgid "Accounts"
 msgstr ""
 
-#: postfach/ui/accounts.py:225
+#: postfach/ui/accounts.py:227 postfach/ui/storage.py:70
+#: postfach/ui/window.py:27
+msgid "Local archive"
+msgstr ""
+
+#: postfach/ui/accounts.py:228
 msgid "GNOME Online Account"
 msgstr ""
 
-#: postfach/ui/accounts.py:226
+#: postfach/ui/accounts.py:228
+msgid "Stored on this device only"
+msgstr ""
+
+#: postfach/ui/accounts.py:229
 msgid "password missing"
 msgstr ""
 
-#: postfach/ui/accounts.py:231
+#: postfach/ui/accounts.py:234
 msgid "Change password …"
 msgstr ""
 
-#: postfach/ui/accounts.py:238
+#: postfach/ui/accounts.py:241
 msgid "Remove account"
 msgstr ""
 
-#: postfach/ui/accounts.py:242
+#: postfach/ui/accounts.py:245
 msgid "Add account …"
 msgstr ""
 
-#: postfach/ui/accounts.py:251
+#: postfach/ui/accounts.py:254
 msgid "Account color"
 msgstr ""
 
-#: postfach/ui/accounts.py:285
+#: postfach/ui/accounts.py:288
 msgid "Remove account?"
 msgstr ""
 
-#: postfach/ui/accounts.py:285
+#: postfach/ui/accounts.py:288
 #, python-brace-format
-msgid "{mail} and the locally stored messages will be removed from this device. Everything on the server stays untouched."
+msgid "{mail} and the locally stored messages will be removed from this device, except messages archived locally, which move to the local archive. Everything on the server stays untouched."
 msgstr ""
 
-#: postfach/ui/accounts.py:288
+#: postfach/ui/accounts.py:292
 msgid "Remove"
 msgstr ""
 
-#: postfach/ui/accounts.py:302
+#: postfach/ui/accounts.py:306
 msgid "View"
 msgstr ""
 
-#: postfach/ui/accounts.py:303 postfach/ui/accounts.py:305
+#: postfach/ui/accounts.py:307 postfach/ui/accounts.py:309
 msgid "Language"
 msgstr ""
 
-#: postfach/ui/accounts.py:305
+#: postfach/ui/accounts.py:309
 msgid "Takes effect after a restart"
 msgstr ""
 
-#: postfach/ui/accounts.py:306
+#: postfach/ui/accounts.py:310
 msgid "System default"
 msgstr ""
 
-#: postfach/ui/accounts.py:311
+#: postfach/ui/accounts.py:315
 #, python-brace-format
 msgid "Restart {app} to apply the language"
 msgstr ""
 
-#: postfach/ui/accounts.py:316
+#: postfach/ui/accounts.py:320
 msgid "Message list"
 msgstr ""
 
-#: postfach/ui/accounts.py:317
+#: postfach/ui/accounts.py:321
 msgid "Preview lines"
 msgstr ""
 
-#: postfach/ui/accounts.py:317
+#: postfach/ui/accounts.py:321
 msgid "Lines of the message text per entry"
 msgstr ""
 
-#: postfach/ui/accounts.py:318
+#: postfach/ui/accounts.py:322
 msgid "2 lines"
 msgstr ""
 
-#: postfach/ui/accounts.py:318
+#: postfach/ui/accounts.py:322
 msgid "3 lines"
 msgstr ""
 
-#: postfach/ui/accounts.py:324
+#: postfach/ui/accounts.py:328
 msgid "Width of the message list (%)"
 msgstr ""
 
-#: postfach/ui/accounts.py:325
+#: postfach/ui/accounts.py:329
 msgid "Can also be changed by dragging the divider between the columns"
 msgstr ""
 
-#: postfach/ui/accounts.py:331
+#: postfach/ui/accounts.py:335
 msgid "Writing messages"
 msgstr ""
 
-#: postfach/ui/accounts.py:332
+#: postfach/ui/accounts.py:336
 msgid "Default format"
 msgstr ""
 
-#: postfach/ui/accounts.py:332
+#: postfach/ui/accounts.py:336
 msgid "Format for new messages"
 msgstr ""
 
-#: postfach/ui/accounts.py:333
+#: postfach/ui/accounts.py:337
 msgid "Formatted (HTML)"
 msgstr ""
 
-#: postfach/ui/accounts.py:333
+#: postfach/ui/accounts.py:337
 msgid "Plain text"
 msgstr ""
 
-#: postfach/ui/accounts.py:337
+#: postfach/ui/accounts.py:341
 msgid "Reply in the format of the original message"
 msgstr ""
 
-#: postfach/ui/accounts.py:338
+#: postfach/ui/accounts.py:342
 msgid "Answer HTML mails as HTML and text mails as text; otherwise the default format applies"
 msgstr ""
 
-#: postfach/ui/accounts.py:342
+#: postfach/ui/accounts.py:346
 msgid "Suggest reducing large images"
 msgstr ""
 
-#: postfach/ui/accounts.py:342
+#: postfach/ui/accounts.py:346
 msgid "When adding attachments if images or the message get too large"
 msgstr ""
 
-#: postfach/ui/accounts.py:346
+#: postfach/ui/accounts.py:350
 msgid "Single image from (MB)"
 msgstr ""
 
-#: postfach/ui/accounts.py:346
+#: postfach/ui/accounts.py:350
 msgid "All attachments from (MB)"
 msgstr ""
 
-#: postfach/ui/accounts.py:352
+#: postfach/ui/accounts.py:356
 msgid "Reading pane"
 msgstr ""
 
-#: postfach/ui/accounts.py:353
+#: postfach/ui/accounts.py:357
 msgid "Load external images automatically"
 msgstr ""
 
-#: postfach/ui/accounts.py:353
+#: postfach/ui/accounts.py:357
 msgid "Can tell senders that you opened the message"
 msgstr ""
 
-#: postfach/ui/accounts.py:357
+#: postfach/ui/accounts.py:361
 msgid "Load sender logos"
 msgstr ""
 
-#: postfach/ui/accounts.py:358
+#: postfach/ui/accounts.py:362
 msgid "For company and service senders (noreply@, info@ …) the logo is fetched from the sender domain's website"
 msgstr ""
 
-#: postfach/ui/accounts.py:362
+#: postfach/ui/accounts.py:366
 msgid "Also use an icon service"
 msgstr ""
 
-#: postfach/ui/accounts.py:363
+#: postfach/ui/accounts.py:367
 #, python-brace-format
 msgid "For domains without a logo of their own, {app} asks DuckDuckGo – DuckDuckGo then learns the sender domains"
 msgstr ""
 
-#: postfach/ui/accounts.py:371 postfach/ui/accounts.py:428
+#: postfach/ui/accounts.py:375 postfach/ui/accounts.py:432
 msgid "Always loaded content"
 msgstr ""
 
-#: postfach/ui/accounts.py:380
+#: postfach/ui/accounts.py:384
 msgid "No sender domain approved"
 msgstr ""
 
-#: postfach/ui/accounts.py:381
+#: postfach/ui/accounts.py:385
 #, python-brace-format
 msgid "{n} sender domain – content loads automatically"
 msgid_plural "{n} sender domains – content loads automatically"
 msgstr[0] ""
 msgstr[1] ""
 
-#: postfach/ui/accounts.py:390
+#: postfach/ui/accounts.py:394
 msgid "Fetching"
 msgstr ""
 
-#: postfach/ui/accounts.py:391
+#: postfach/ui/accounts.py:395
 msgid "Synchronization"
 msgstr ""
 
-#: postfach/ui/accounts.py:393
+#: postfach/ui/accounts.py:397
 msgid "Fetch interval (minutes)"
 msgstr ""
 
-#: postfach/ui/accounts.py:397
+#: postfach/ui/accounts.py:401
 msgid "Messages per folder"
 msgstr ""
 
-#: postfach/ui/accounts.py:398
+#: postfach/ui/accounts.py:402
 msgid "The newest N messages are stored locally and searched"
 msgstr ""
 
-#: postfach/ui/accounts.py:404
+#: postfach/ui/accounts.py:408
 msgid "Background"
 msgstr ""
 
-#: postfach/ui/accounts.py:405
+#: postfach/ui/accounts.py:409
 msgid "Keep running in the background"
 msgstr ""
 
-#: postfach/ui/accounts.py:406
+#: postfach/ui/accounts.py:410
 msgid "Keep fetching mail when the window is closed; reopen via notification or status bar"
 msgstr ""
 
-#: postfach/ui/accounts.py:409
+#: postfach/ui/accounts.py:413
 msgid "Start at login"
 msgstr ""
 
-#: postfach/ui/accounts.py:409
+#: postfach/ui/accounts.py:413
 #, python-brace-format
 msgid "Starts {app} in the background without a window"
 msgstr ""
 
-#: postfach/ui/accounts.py:441
+#: postfach/ui/accounts.py:445
 msgid "External content (images etc.) from these sender domains is loaded automatically. Subdomains are included."
 msgstr ""
 
-#: postfach/ui/accounts.py:446
+#: postfach/ui/accounts.py:450
 msgid "Stop loading automatically"
 msgstr ""
 
-#: postfach/ui/accounts.py:452
+#: postfach/ui/accounts.py:456
 msgid "None"
 msgstr ""
 
-#: postfach/ui/accounts.py:452
+#: postfach/ui/accounts.py:456
 msgid "Add one via “Load” → “Always load from …” in a message"
 msgstr ""
 
@@ -605,7 +790,7 @@ msgstr ""
 msgid "Open (right-click: Open with …)"
 msgstr ""
 
-#: postfach/ui/compose.py:352 postfach/ui/reader.py:181
+#: postfach/ui/compose.py:352 postfach/ui/reader.py:193
 msgid "Open with …"
 msgstr ""
 
@@ -613,7 +798,8 @@ msgstr ""
 msgid "Remove attachment"
 msgstr ""
 
-#: postfach/ui/compose.py:374 postfach/ui/openfile.py:53
+#: postfach/ui/compose.py:374 postfach/ui/invitecard.py:130
+#: postfach/ui/openfile.py:53
 #, python-brace-format
 msgid "Opening failed: {error}"
 msgstr ""
@@ -700,7 +886,7 @@ msgstr ""
 msgid "Please enter a recipient"
 msgstr ""
 
-#: postfach/ui/compose.py:616
+#: postfach/ui/compose.py:616 postfach/ui/invitecard.py:177
 #, python-brace-format
 msgid "Sending failed: {error}"
 msgstr ""
@@ -738,71 +924,177 @@ msgstr ""
 msgid "Draft saved"
 msgstr ""
 
+#: postfach/ui/invitecard.py:52
+msgid "(no title)"
+msgstr ""
+
+#: postfach/ui/invitecard.py:60
+msgid "This event was cancelled."
+msgstr ""
+
+#: postfach/ui/invitecard.py:66
+#, python-brace-format
+msgid "{name} accepted the invitation."
+msgstr ""
+
+#: postfach/ui/invitecard.py:66
+#, python-brace-format
+msgid "{name} declined the invitation."
+msgstr ""
+
+#: postfach/ui/invitecard.py:67
+#, python-brace-format
+msgid "{name} may attend."
+msgstr ""
+
+#: postfach/ui/invitecard.py:67
+#, python-brace-format
+msgid "{name} replied to the invitation."
+msgstr ""
+
+#: postfach/ui/invitecard.py:75
+msgid "When"
+msgstr ""
+
+#: postfach/ui/invitecard.py:79
+msgid "Where"
+msgstr ""
+
+#: postfach/ui/invitecard.py:82
+msgid "Organizer"
+msgstr ""
+
+#: postfach/ui/invitecard.py:87
+#, python-brace-format
+msgid "+{n} more"
+msgstr ""
+
+#: postfach/ui/invitecard.py:88
+msgid "Attendees"
+msgstr ""
+
+#: postfach/ui/invitecard.py:96
+msgid "Accept"
+msgstr ""
+
+#: postfach/ui/invitecard.py:96
+msgid "Maybe"
+msgstr ""
+
+#: postfach/ui/invitecard.py:96
+msgid "Decline"
+msgstr ""
+
+#: postfach/ui/invitecard.py:102
+msgid "With a message …"
+msgstr ""
+
+#: postfach/ui/invitecard.py:110
+msgid "Add to calendar"
+msgstr ""
+
+#: postfach/ui/invitecard.py:117
+msgid "You accepted this invitation."
+msgstr ""
+
+#: postfach/ui/invitecard.py:117
+msgid "You answered “maybe”."
+msgstr ""
+
+#: postfach/ui/invitecard.py:118
+msgid "You declined this invitation."
+msgstr ""
+
+#: postfach/ui/invitecard.py:134
+msgid "Accept with a message"
+msgstr ""
+
+#: postfach/ui/invitecard.py:134
+msgid "“Maybe” with a message"
+msgstr ""
+
+#: postfach/ui/invitecard.py:135
+msgid "Decline with a message"
+msgstr ""
+
+#: postfach/ui/invitecard.py:137
+#, python-brace-format
+msgid "The message is sent to {name} together with your response."
+msgstr ""
+
+#: postfach/ui/invitecard.py:141
+msgid "Send"
+msgstr ""
+
+#: postfach/ui/invitecard.py:180
+msgid "Response sent"
+msgstr ""
+
 #: postfach/ui/openfile.py:34
 msgid "Executable files are not opened directly – please save them"
 msgstr ""
 
-#: postfach/ui/reader.py:64
+#: postfach/ui/reader.py:66
 msgid "Reply (Ctrl+R)"
 msgstr ""
 
-#: postfach/ui/reader.py:65
+#: postfach/ui/reader.py:67
 msgid "Reply all (Ctrl+Shift+R)"
 msgstr ""
 
-#: postfach/ui/reader.py:66
+#: postfach/ui/reader.py:68
 msgid "Forward (Ctrl+L)"
 msgstr ""
 
-#: postfach/ui/reader.py:86
+#: postfach/ui/reader.py:91
 msgid "External content was blocked"
 msgstr ""
 
-#: postfach/ui/reader.py:89
+#: postfach/ui/reader.py:94
 msgid "Load"
 msgstr ""
 
-#: postfach/ui/reader.py:92 postfach/ui/reader.py:126
+#: postfach/ui/reader.py:97 postfach/ui/reader.py:138
 msgid "Always load"
 msgstr ""
 
-#: postfach/ui/reader.py:122
+#: postfach/ui/reader.py:127
 #, python-brace-format
 msgid "To: {recipients}"
 msgstr ""
 
-#: postfach/ui/reader.py:122
+#: postfach/ui/reader.py:127
 msgid "hidden recipients (BCC)"
 msgstr ""
 
-#: postfach/ui/reader.py:126
+#: postfach/ui/reader.py:138
 #, python-brace-format
 msgid "Always load from {domain}"
 msgstr ""
 
-#: postfach/ui/reader.py:148
+#: postfach/ui/reader.py:160
 #, python-brace-format
 msgid "Content from {domain} will now load automatically"
 msgstr ""
 
-#: postfach/ui/reader.py:161
+#: postfach/ui/reader.py:173
 msgid "Open"
 msgstr ""
 
-#: postfach/ui/reader.py:169 postfach/ui/reader.py:182
+#: postfach/ui/reader.py:181 postfach/ui/reader.py:194
 msgid "Save as …"
 msgstr ""
 
-#: postfach/ui/reader.py:198
+#: postfach/ui/reader.py:210
 #, python-brace-format
 msgid "Loading “{name}” completely …"
 msgstr ""
 
-#: postfach/ui/reader.py:207
+#: postfach/ui/reader.py:219
 msgid "Attachment not found"
 msgstr ""
 
-#: postfach/ui/reader.py:228
+#: postfach/ui/reader.py:240
 #, python-brace-format
 msgid "Saved: {name}"
 msgstr ""
@@ -815,221 +1107,428 @@ msgstr ""
 msgid "%Y-%m-%d"
 msgstr ""
 
-#: postfach/ui/rows.py:81
+#: postfach/ui/rows.py:83
+msgid "Calendar invitation"
+msgstr ""
+
+#: postfach/ui/rows.py:84
 msgid "Remove flag"
 msgstr ""
 
-#: postfach/ui/window.py:121
+#: postfach/ui/storage.py:21
+msgid "Storage"
+msgstr ""
+
+#: postfach/ui/storage.py:24
+msgid "Data location"
+msgstr ""
+
+#: postfach/ui/storage.py:25
+msgid "The database (SQLite) with all stored messages and the local archive. A new folder takes effect after a restart; the database is moved then."
+msgstr ""
+
+#: postfach/ui/storage.py:36 postfach/ui/storage.py:55
+#, python-brace-format
+msgid "Moves to {path} after the restart"
+msgstr ""
+
+#: postfach/ui/storage.py:37
+msgid "Change …"
+msgstr ""
+
+#: postfach/ui/storage.py:46
+msgid "The folder is not writable"
+msgstr ""
+
+#: postfach/ui/storage.py:56
+msgid "The database moves to the new folder after the restart"
+msgstr ""
+
+#: postfach/ui/storage.py:59
+msgid "Choose data folder"
+msgstr ""
+
+#: postfach/ui/storage.py:71
+msgid "Older messages (inbox and sent) are kept only on this device and deleted on the server. They stay in the unified inbox and sent folder and in the search."
+msgstr ""
+
+#: postfach/ui/storage.py:73
+msgid "Keep old messages only locally"
+msgstr ""
+
+#: postfach/ui/storage.py:74
+msgid "Deletes them on the server after they are saved here"
+msgstr ""
+
+#: postfach/ui/storage.py:77
+msgid "Older than (months)"
+msgstr ""
+
+#: postfach/ui/storage.py:80
+msgid "Archive now"
+msgstr ""
+
+#: postfach/ui/storage.py:92
+msgid "Delete old messages on the server?"
+msgstr ""
+
+#: postfach/ui/storage.py:93
+#, python-brace-format
+msgid "Messages in the inbox and sent folders older than {n} months are saved on this device and then deleted on the server. Only this copy remains, so back up the data folder regularly."
+msgstr ""
+
+#: postfach/ui/storage.py:97
+msgid "Enable"
+msgstr ""
+
+#: postfach/ui/storage.py:116
+msgid "Archiving started"
+msgstr ""
+
+#: postfach/ui/storage.py:120
+#, python-brace-format
+msgid "{n} message stored only locally"
+msgid_plural "{n} messages stored only locally"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/storage.py:127 postfach/ui/storage.py:165
+msgid "Import"
+msgstr ""
+
+#: postfach/ui/storage.py:128
+msgid "Import from Thunderbird …"
+msgstr ""
+
+#: postfach/ui/storage.py:129
+msgid "Reads messages from a Thunderbird profile; duplicates are skipped"
+msgstr ""
+
+#: postfach/ui/storage.py:140
+msgid "Import from Thunderbird"
+msgstr ""
+
+#: postfach/ui/storage.py:150
+msgid "Profile"
+msgstr ""
+
+#: postfach/ui/storage.py:151
+msgid "No profile found"
+msgstr ""
+
+#: postfach/ui/storage.py:153
+msgid "Other folder …"
+msgstr ""
+
+#: postfach/ui/storage.py:175
+msgid "Choose Thunderbird profile folder"
+msgstr ""
+
+#: postfach/ui/storage.py:195
+msgid "No Thunderbird profile found. Choose the profile folder manually."
+msgstr ""
+
+#: postfach/ui/storage.py:203
+msgid "No mail folders found in this profile."
+msgstr ""
+
+#: postfach/ui/storage.py:206
+msgid "Other folders"
+msgstr ""
+
+#: postfach/ui/storage.py:214
+msgid "By sender"
+msgstr ""
+
+#: postfach/ui/storage.py:217
+msgid "Local folders"
+msgstr ""
+
+#: postfach/ui/storage.py:240
+msgid "Importing …"
+msgstr ""
+
+#: postfach/ui/storage.py:261
+#, python-brace-format
+msgid "Import failed: {error}"
+msgstr ""
+
+#: postfach/ui/storage.py:263
+#, python-brace-format
+msgid "Imported {n} messages, {d} duplicates skipped"
+msgstr ""
+
+#: postfach/ui/storage.py:267
+msgid "Close"
+msgstr ""
+
+#: postfach/ui/window.py:130
 #, python-brace-format
 msgid "{n} new message"
 msgid_plural "{n} new messages"
 msgstr[0] ""
 msgstr[1] ""
 
-#: postfach/ui/window.py:175
+#: postfach/ui/window.py:184
 msgid "Menu (accounts, settings)"
 msgstr ""
 
-#: postfach/ui/window.py:192
+#: postfach/ui/window.py:211
 msgid "Fetch (F5)"
 msgstr ""
 
-#: postfach/ui/window.py:193
+#: postfach/ui/window.py:212
 msgid "New message (Ctrl+N)"
 msgstr ""
 
-#: postfach/ui/window.py:195
+#: postfach/ui/window.py:214
 msgid "Flag"
 msgstr ""
 
-#: postfach/ui/window.py:197 postfach/ui/window.py:270
+#: postfach/ui/window.py:216 postfach/ui/window.py:293
 msgid "Mark as unread"
 msgstr ""
 
-#: postfach/ui/window.py:199 postfach/ui/window.py:269
-#: postfach/ui/window.py:578 postfach/ui/window.py:580
+#: postfach/ui/window.py:218 postfach/ui/window.py:292
+#: postfach/ui/window.py:640 postfach/ui/window.py:642
 msgid "Mark as spam"
 msgstr ""
 
-#: postfach/ui/window.py:201
+#: postfach/ui/window.py:220
 msgid "Delete (Del)"
 msgstr ""
 
-#: postfach/ui/window.py:204
+#: postfach/ui/window.py:223
 msgid "Search …  from:name  file:pdf"
 msgstr ""
 
-#: postfach/ui/window.py:205
+#: postfach/ui/window.py:224
 msgid "Full-text search. Filters: from:anna · from:\"anna smith\" · to:name · subject:text · file:pdf · is:unread · is:flagged"
 msgstr ""
 
-#: postfach/ui/window.py:225 postfach/ui/window.py:539
+#: postfach/ui/window.py:248 postfach/ui/window.py:601
 msgid "No messages"
 msgstr ""
 
-#: postfach/ui/window.py:242
+#: postfach/ui/window.py:265
 msgid "Messages"
 msgstr ""
 
-#: postfach/ui/window.py:264
+#: postfach/ui/window.py:287
 msgid "No message selected"
 msgstr ""
 
-#: postfach/ui/window.py:266
+#: postfach/ui/window.py:289
 msgid "Several messages selected"
 msgstr ""
 
-#: postfach/ui/window.py:269 postfach/ui/window.py:743
+#: postfach/ui/window.py:292 postfach/ui/window.py:794
 msgid "Delete"
 msgstr ""
 
-#: postfach/ui/window.py:270
+#: postfach/ui/window.py:293
 msgid "Mark as read"
 msgstr ""
 
-#: postfach/ui/window.py:281
+#: postfach/ui/window.py:304
 msgid "Reading"
 msgstr ""
 
-#: postfach/ui/window.py:304
+#: postfach/ui/window.py:327
 msgid "Mailboxes"
 msgstr ""
 
-#: postfach/ui/window.py:314
+#: postfach/ui/window.py:337
 #, python-brace-format
 msgid "About {app}"
 msgstr ""
 
-#: postfach/ui/window.py:364 postfach/ui/window.py:415
+#: postfach/ui/window.py:393 postfach/ui/window.py:447
 msgid "Unified inbox"
 msgstr ""
 
-#: postfach/ui/window.py:365 postfach/ui/window.py:415
+#: postfach/ui/window.py:394 postfach/ui/window.py:447
 msgid "Unread"
 msgstr ""
 
-#: postfach/ui/window.py:366 postfach/ui/window.py:415
+#: postfach/ui/window.py:395 postfach/ui/window.py:447
 msgid "Flagged"
 msgstr ""
 
-#: postfach/ui/window.py:463
+#: postfach/ui/window.py:495
 msgid "A lean mail client for GNOME"
 msgstr ""
 
-#: postfach/ui/window.py:468
+#: postfach/ui/window.py:500
 msgid "Restart"
 msgstr ""
 
-#: postfach/ui/window.py:525
+#: postfach/ui/window.py:538
+msgid "Newest first"
+msgstr ""
+
+#: postfach/ui/window.py:538
+msgid "Oldest first"
+msgstr ""
+
+#: postfach/ui/window.py:539
+msgid "Sender (A–Z)"
+msgstr ""
+
+#: postfach/ui/window.py:539
+msgid "Recipient (A–Z)"
+msgstr ""
+
+#: postfach/ui/window.py:540
+msgid "Subject (A–Z)"
+msgstr ""
+
+#: postfach/ui/window.py:540
+msgid "Unread first"
+msgstr ""
+
+#: postfach/ui/window.py:541
+msgid "Flagged first"
+msgstr ""
+
+#: postfach/ui/window.py:543
+msgid "Sort"
+msgstr ""
+
+#: postfach/ui/window.py:587
 msgid "No account yet"
 msgstr ""
 
-#: postfach/ui/window.py:526
+#: postfach/ui/window.py:588
 msgid "Add an account via GNOME Online Accounts or IMAP."
 msgstr ""
 
-#: postfach/ui/window.py:535
+#: postfach/ui/window.py:597
 msgid "No results"
 msgstr ""
 
-#: postfach/ui/window.py:536
+#: postfach/ui/window.py:598
 #, python-brace-format
 msgid "Nothing found for “{query}” in {view}."
 msgstr ""
 
-#: postfach/ui/window.py:578
+#: postfach/ui/window.py:640
 msgid "Not spam – back to the inbox"
 msgstr ""
 
-#: postfach/ui/window.py:580
+#: postfach/ui/window.py:642
 msgid "Not spam"
 msgstr ""
 
-#: postfach/ui/window.py:592
+#: postfach/ui/window.py:654
 #, python-brace-format
 msgid "{n} message selected"
 msgid_plural "{n} messages selected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: postfach/ui/window.py:619
+#: postfach/ui/window.py:681
 #, python-brace-format
 msgid "The message could not be loaded completely: {error}"
 msgstr ""
 
-#: postfach/ui/window.py:673
-msgid "Server action failed"
-msgstr ""
-
-#: postfach/ui/window.py:708
-#, python-brace-format
-msgid "Failed: {error}"
-msgstr ""
-
-#: postfach/ui/window.py:735
+#: postfach/ui/window.py:786
 msgid "The message will be moved to the trash."
 msgid_plural "The messages will be moved to the trash."
 msgstr[0] ""
 msgstr[1] ""
 
-#: postfach/ui/window.py:737
+#: postfach/ui/window.py:788
 msgid "The message will be deleted permanently and cannot be restored."
 msgid_plural "The messages will be deleted permanently and cannot be restored."
 msgstr[0] ""
 msgstr[1] ""
 
-#: postfach/ui/window.py:740
+#: postfach/ui/window.py:791
 #, python-brace-format
 msgid "The messages will be deleted – {k} of them permanently, the rest will go to the trash."
 msgstr ""
 
-#: postfach/ui/window.py:741
+#: postfach/ui/window.py:792
 #, python-brace-format
 msgid "Delete message?"
 msgid_plural "Delete {n} messages?"
 msgstr[0] ""
 msgstr[1] ""
 
-#: postfach/ui/window.py:747
+#: postfach/ui/window.py:798
 #, python-brace-format
 msgid "Message deleted"
 msgid_plural "{n} messages deleted"
 msgstr[0] ""
 msgstr[1] ""
 
-#: postfach/ui/window.py:753
+#: postfach/ui/window.py:804
 msgid "No archive folder in this account"
 msgstr ""
 
-#: postfach/ui/window.py:760
+#: postfach/ui/window.py:811
 #, python-brace-format
 msgid "Message archived"
 msgid_plural "{n} messages archived"
 msgstr[0] ""
 msgstr[1] ""
 
-#: postfach/ui/window.py:773
+#: postfach/ui/window.py:824
 msgid "No inbox in this account"
 msgstr ""
 
-#: postfach/ui/window.py:775
+#: postfach/ui/window.py:826
 #, python-brace-format
 msgid "Message moved back to the inbox"
 msgid_plural "{n} messages moved back to the inbox"
 msgstr[0] ""
 msgstr[1] ""
 
-#: postfach/ui/window.py:779
+#: postfach/ui/window.py:831
 msgid "No spam folder in this account, or the message is already in spam"
 msgstr ""
 
-#: postfach/ui/window.py:782
+#: postfach/ui/window.py:836
+#, python-brace-format
+msgid "Spam message deleted"
+msgid_plural "{n} spam messages deleted"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/window.py:837
 #, python-brace-format
 msgid "Message moved to the spam folder"
 msgid_plural "{n} messages moved to the spam folder"
 msgstr[0] ""
 msgstr[1] ""
 
-#: postfach/ui/window.py:799
+#: postfach/ui/window.py:854
 msgid "Loading the complete message …"
 msgstr ""
+
+#: postfach/ui/window.py:881
+msgid "Offline – changes are saved and sent when the connection is back"
+msgstr ""
+
+#: postfach/ui/window.py:893
+msgid "Offline"
+msgstr ""
+
+#: postfach/ui/window.py:894
+#, python-brace-format
+msgid "{n} change waiting"
+msgid_plural "{n} changes waiting"
+msgstr[0] ""
+msgstr[1] ""
+
+#: postfach/ui/window.py:897
+msgid "No connection – the app keeps checking quietly."
+msgstr ""
+
+#: postfach/ui/window.py:898
+#, python-brace-format
+msgid "{n} change will be sent to the server."
+msgid_plural "{n} changes will be sent to the server."
+msgstr[0] ""
+msgstr[1] ""

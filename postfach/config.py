@@ -23,8 +23,13 @@ DEFAULTS = {
     "run_in_background": True,  # Fenster schließen = im Hintergrund weiterlaufen
     "autostart": False,        # beim Anmelden im Hintergrund starten
     "nav_expanded": None,      # aufgeklappte Knoten der Ordner-Baumansicht
+    "sort": "date_desc",       # Sortierung der Nachrichtenliste (db.SORTS)
     "list_fraction": 0.36,     # Breite der Nachrichtenliste relativ zum Fenster
     "window_size": [1280, 800],
+    "data_dir": None,          # Ordner der Datenbank (None = Dokumente/Postfach); Umzug beim nächsten Start
+    "data_dir_from": None,     # bisheriger Ordner, solange ein Umzug aussteht
+    "archive_enabled": False,  # alte Mails nur noch lokal behalten und auf dem Server löschen
+    "archive_months": 24,      # Alter (Monate), ab dem Mails ins lokale Archiv wandern
     "last_view": {"kind": "unified"},
 }
 

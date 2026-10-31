@@ -54,10 +54,11 @@ def active_language():
 
 def _mo_dir(lang):
     """Verzeichnis mit der kompilierten Übersetzung; fehlt die .mo, wird sie aus po/<lang>.po erzeugt (Entwicklung)."""
-    for base in (_PKG_LOCALE, CACHE_LOCALE, "/usr/share/locale"):
-        if os.path.exists(os.path.join(base, lang, "LC_MESSAGES", DOMAIN + ".mo")):
-            return base
     po = os.path.join(os.path.dirname(os.path.dirname(__file__)), "po", lang + ".po")
+    for base in (_PKG_LOCALE, CACHE_LOCALE, "/usr/share/locale"):
+        mo = os.path.join(base, lang, "LC_MESSAGES", DOMAIN + ".mo")
+        if os.path.exists(mo) and not (os.path.exists(po) and os.path.getmtime(po) > os.path.getmtime(mo)):
+            return base                      # vorhanden und aktuell (Entwicklung: .po neuer → neu kompilieren)
     if os.path.exists(po):
         out = os.path.join(CACHE_LOCALE, lang, "LC_MESSAGES")
         os.makedirs(out, exist_ok=True)

@@ -7,7 +7,7 @@ import sys
 import tempfile
 import threading
 
-os.environ["XDG_DATA_HOME"] = tempfile.mkdtemp()
+os.environ["POSTFACH_DATA_DIR"] = tempfile.mkdtemp()
 os.environ["XDG_CONFIG_HOME"] = tempfile.mkdtemp()
 sys.path.insert(0, __file__.rsplit("/tools/", 1)[0])
 from postfach import db, imapsync  # noqa: E402

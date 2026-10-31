@@ -78,6 +78,9 @@ class MessageRow(Gtk.Box):
         self.sender.set_hexpand(True)
         self.clip = Gtk.Image.new_from_icon_name("mail-attachment-symbolic")
         self.clip.add_css_class("dim-label")
+        self.cal = Gtk.Image.new_from_icon_name("x-office-calendar-symbolic")
+        self.cal.add_css_class("dim-label")
+        self.cal.set_tooltip_text(_("Calendar invitation"))
         self.star = Gtk.Button(icon_name="starred-symbolic", tooltip_text=_("Remove flag"), valign=Gtk.Align.CENTER)
         self.star.add_css_class("flat")
         self.star.add_css_class("circular")
@@ -86,7 +89,7 @@ class MessageRow(Gtk.Box):
         self.star.connect("clicked", lambda *_: self._item and self._item.on_star and self._item.on_star(self._item))
         self._item, self._hid = None, None
         self.date = _label(["caption", "dim-label", "numeric"], ellipsize=False, xalign=1.0)
-        for w in (self.sender, self.clip, self.star, self.date):
+        for w in (self.sender, self.cal, self.clip, self.star, self.date):
             top.append(w)
         col.append(top)
 
@@ -132,6 +135,7 @@ class MessageRow(Gtk.Box):
         self.preview.set_text(d["snippet"] or "")
         self.preview.set_lines(int(config.get("preview_lines")))
         self.clip.set_visible(bool(d["has_att"]))
+        self.cal.set_visible(bool(d["has_cal"]))
         self.star.set_visible(bool(d["flagged"]))
         self.acc.set_text(item.account_label)
         self.acc.set_visible(bool(item.account_label))

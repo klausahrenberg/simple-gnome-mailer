@@ -1,5 +1,5 @@
 """Füllt eine Demo-Datenbank mit frei erfundenen Nachrichten (für Screenshots/Entwicklung).
-Aufruf mit gesetzten XDG_DATA_HOME/XDG_CONFIG_HOME auf Temp-Ordner und POSTFACH_DEMO=1 beim Starten der App."""
+Aufruf mit gesetzten POSTFACH_DATA_DIR/XDG_CONFIG_HOME auf Temp-Ordner und POSTFACH_DEMO=1 beim Starten der App."""
 import sys
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
@@ -47,6 +47,18 @@ for i, (acc, name, addr, subj, body, hours, seen, flag, att, html) in enumerate(
     m.set_content(body)
     if html:
         m.add_alternative(html, subtype="html")
+    if "Planungsmeeting" in subj:          # Termineinladung (iCalendar) wie von Kalenderprogrammen verschickt
+        start = (now + timedelta(days=5)).replace(hour=9, minute=0, second=0, microsecond=0)
+        fmt = lambda d: d.strftime("%Y%m%dT%H%M%SZ")
+        m.add_alternative(
+            "BEGIN:VCALENDAR\r\nPRODID:-//Beispiel//Kalender//DE\r\nVERSION:2.0\r\nMETHOD:REQUEST\r\nBEGIN:VEVENT\r\n"
+            f"UID:demo-planung-1@lenz-studio.example\r\nDTSTAMP:{fmt(now)}\r\nDTSTART:{fmt(start)}\r\nDTEND:{fmt(start + timedelta(hours=1))}\r\n"
+            "SUMMARY:Planungsmeeting neues Projekt\r\nLOCATION:Besprechungsraum 2\r\n"
+            "DESCRIPTION:Bitte Skizzen mitbringen.\\nAgenda: Ziele\\, Zeitplan\\, Aufgaben\r\n"
+            "ORGANIZER;CN=Studio Lenz Team:mailto:team@lenz-studio.example\r\n"
+            "ATTENDEE;CN=Anna;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:anna@lenz-studio.example\r\n"
+            "ATTENDEE;CN=Nina Brandt;PARTSTAT=ACCEPTED:mailto:nina@lenz-studio.example\r\n"
+            "END:VEVENT\r\nEND:VCALENDAR\r\n", subtype="calendar", params={"method": "REQUEST"})
     if att:
         data = b"%PDF-1.4 demo" if att[1] == "pdf" else b"\x89PNG demo"
         m.add_attachment(data, maintype="application" if att[1] == "pdf" else "image", subtype=att[1], filename=att[0])

@@ -9,6 +9,7 @@ import time
 from html.parser import HTMLParser
 
 from .i18n import _
+from .invite import CAL_TYPES
 
 POLICY = email.policy.default
 
@@ -99,6 +100,7 @@ def parse(raw: bytes):
         ts = int(time.time())
     to = ", ".join(filter(None, (_decode(msg["To"]), _decode(msg["Cc"]))))
     has_att = any(p.get_content_disposition() == "attachment" for p in msg.walk())
+    has_cal = any(p.get_content_type() in CAL_TYPES or (p.get_filename() or "").lower().endswith(".ics") for p in msg.walk())
     return {
         "message_id": _decode(msg["Message-ID"]).strip(),
         "subject": _decode(msg["Subject"]).strip() or "",
@@ -110,6 +112,7 @@ def parse(raw: bytes):
         "body_text": text,
         "body_html": htm,
         "has_att": int(has_att),
+        "has_cal": int(has_cal),
         "att_names": att_names(raw) if has_att else "",
     }
 

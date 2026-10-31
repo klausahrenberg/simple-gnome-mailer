@@ -17,6 +17,7 @@ Schlanker, moderner Mail-Client für GNOME (Python · GTK4 · libadwaita · WebK
 * Mehrere Konten, gemeinsamer Posteingang über alle Konten
 * IMAP (Passwort); Google und Microsoft 365 über die GNOME-Online-Konten (OAuth2/Graph)
 * Volltextsuche (SQLite FTS5) über Betreff, Absender, Empfänger und Nachrichtentext, auch Präfixsuche
+* Termineinladungen (iCalendar): Anzeige in der Nachricht, Zu-/Absagen (Antwort an den Organisator), „Zum Kalender hinzufügen“
 * Senden per SMTP, Antworten, Weiterleiten, Löschen, Archivieren, Stern, Ungelesen
 * Passwörter im GNOME-Schlüsselbund (libsecret); HTML-Mails ohne JavaScript, externe Bilder blockiert
 
@@ -34,7 +35,8 @@ Das Paket installiert den Befehl `postfach`, den Starter `eu.ahrenberg.mail`, di
     ./run.sh
 
 Benötigt: `python-gobject`, `gtk4`, `libadwaita`, `webkitgtk-6.0`, `libsecret` (Python ≥ 3.10).
-Daten: `~/.local/share/postfach/mail.db`, Einstellungen: `~/.config/postfach/config.json`.
+Daten: Datenbank `mail.db` (SQLite, FTS5) in `~/Dokumente/Postfach/` (einstellbar unter Einstellungen → Speicher), Einstellungen: `~/.config/postfach/config.json`.
+Alte Mails können nur noch lokal gehalten werden (Posteingang/Gesendet, Standard 24 Monate; Löschung auf dem Server); Import aus Thunderbird (mbox/Maildir) unter Einstellungen → Speicher.
 
 ## Google / Microsoft
 
