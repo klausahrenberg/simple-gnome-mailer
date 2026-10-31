@@ -65,6 +65,8 @@ class App(Adw.Application):
             self.add_action(act)
             if accel:
                 self.set_accels_for_action(f"app.{name}", [accel])
+        if config.get("autostart") and not os.environ.get("POSTFACH_DEMO"):
+            set_autostart(True)       # Eintrag bei jedem Start prüfen/erneuern (fehlt er, wird er wiederhergestellt)
         self.tray = Tray(lambda: self._win().present(), self._compose, self.quit_app)
         if not os.environ.get("POSTFACH_DEMO"):
             self.tray.start()
