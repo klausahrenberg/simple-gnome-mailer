@@ -91,6 +91,18 @@ def pixmap(n):
     return _pixmaps[key]
 
 
+_variants = {}
+
+
+def pixmap_variant(n):
+    """IconPixmap als GVariant – einmal je Zustand gebaut: Das Erzeugen kostet ~100 ms (16 384 Bytes einzeln) und
+    würde sonst bei jeder Eigenschaftsabfrage der Shell die Oberfläche blockieren (Tippen/Suchen ruckelte)."""
+    key = n > 0
+    if key not in _variants:
+        _variants[key] = GLib.Variant("a(iiay)", pixmap(n))
+    return _variants[key]
+
+
 SNI_PATH, MENU_PATH = "/StatusNotifierItem", "/StatusNotifierMenu"
 ICONS = os.path.join(os.path.dirname(__file__), "icons")
 
@@ -105,6 +117,8 @@ class Tray:
 
     # ------------------------------------------------------------ Start
     def start(self):
+        import threading
+        threading.Thread(target=lambda: (pixmap_variant(0), pixmap_variant(1)), daemon=True, name="tray-icon").start()
         try:
             self.conn = Gio.bus_get_sync(Gio.BusType.SESSION, None)
             self.name = f"org.kde.StatusNotifierItem-{os.getpid()}-1"
@@ -138,18 +152,19 @@ class Tray:
     # ------------------------------------------------------------ SNI
     def _sni_prop(self, conn, sender, path, iface, prop):
         n = self.unread
-        tip = (ngettext("{n} unread message", "{n} unread messages", n).format(n=n) if n else _("No unread messages"))
-        table = {
-            "Category": GLib.Variant("s", "Communications"), "Id": GLib.Variant("s", APP_ID),
-            "Title": GLib.Variant("s", APP_NAME), "Status": GLib.Variant("s", self._status()),
-            "WindowId": GLib.Variant("u", 0),
-            "IconName": GLib.Variant("s", ""), "IconPixmap": GLib.Variant("a(iiay)", pixmap(n)),
-            "IconThemePath": GLib.Variant("s", ICONS), "OverlayIconName": GLib.Variant("s", ""),
-            "AttentionIconName": GLib.Variant("s", ""), "ItemIsMenu": GLib.Variant("b", False),
-            "Menu": GLib.Variant("o", MENU_PATH),
-            "ToolTip": GLib.Variant("(sa(iiay)ss)", (APP_ID, [], APP_NAME, tip)),
+        simple = {
+            "Category": ("s", "Communications"), "Id": ("s", APP_ID), "Title": ("s", APP_NAME), "Status": ("s", self._status()),
+            "WindowId": ("u", 0), "IconName": ("s", ""), "IconThemePath": ("s", ICONS), "OverlayIconName": ("s", ""),
+            "AttentionIconName": ("s", ""), "ItemIsMenu": ("b", False), "Menu": ("o", MENU_PATH),
         }
-        return table.get(prop)
+        if prop in simple:
+            return GLib.Variant(*simple[prop])
+        if prop == "IconPixmap":
+            return pixmap_variant(n)
+        if prop == "ToolTip":
+            tip = (ngettext("{n} unread message", "{n} unread messages", n).format(n=n) if n else _("No unread messages"))
+            return GLib.Variant("(sa(iiay)ss)", (APP_ID, [], APP_NAME, tip))
+        return None
 
     def _sni_call(self, conn, sender, path, iface, method, params, inv):
         if method in ("Activate", "SecondaryActivate"):

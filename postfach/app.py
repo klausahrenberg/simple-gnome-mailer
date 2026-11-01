@@ -111,5 +111,21 @@ class App(Adw.Application):
         win.present()
 
 
+def _crash_log():
+    """Bei einem Absturz (Segfault) die Python-Stapel in ~/.cache/postfach/crash.log festhalten."""
+    import faulthandler
+    d = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "postfach")
+    try:
+        os.makedirs(d, exist_ok=True)
+        f = open(os.path.join(d, "crash.log"), "a", encoding="utf-8")
+        f.write(f"\n--- {__import__('time').strftime('%Y-%m-%d %H:%M:%S')} Start (pid {os.getpid()}) ---\n")
+        f.flush()
+        faulthandler.enable(file=f, all_threads=True)
+        return f
+    except OSError:
+        return None
+
+
 def main():
+    _log = _crash_log()    # Datei offen halten, solange die App läuft
     return App().run(sys.argv)

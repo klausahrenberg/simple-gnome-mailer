@@ -603,10 +603,14 @@ class MainWindow(Adw.ApplicationWindow):
                 self.empty.set_description("")
 
     def _on_search(self, entry):
-        self.search_text = entry.get_text().strip()
+        text = entry.get_text().strip()
+        if text == self.search_text:
+            return
+        self.search_text = text
         self._search_id += 1
         sid = self._search_id
-        GLib.timeout_add(200, lambda: (self.reload_list() if sid == self._search_id else None) and False)
+        # kurz warten, bis die Eingabe pausiert (jede Neuaufstellung der Liste kostet ~0,3 s)
+        GLib.timeout_add(350, lambda: (self.reload_list() if sid == self._search_id else None) and False)
 
     # --------------------------------------------------------- Auswahl/Lesen
     def _selected_positions(self):
