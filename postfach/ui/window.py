@@ -6,7 +6,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gio, GLib, GObject, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
 
 from .. import badge, APP_ID, APP_NAME, __version__, config, contacts, db, goa, imapsync
 from ..i18n import _, ngettext
@@ -327,7 +327,7 @@ class MainWindow(Adw.ApplicationWindow):
         hb = Adw.HeaderBar(show_end_title_buttons=False, show_start_title_buttons=False)
         hb.set_title_widget(Adw.WindowTitle(title=_("Mailboxes")))
         box.append(hb)
-        self.nav = NavTree(self._on_nav_view)
+        self.nav = NavTree(self._on_nav_view, self._nav_menu)
         sc = Gtk.ScrolledWindow(child=self.nav.view, vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER)
         box.append(sc)
         box.append(Gtk.Separator())
@@ -731,6 +731,54 @@ class MainWindow(Adw.ApplicationWindow):
                 db.queue_op("flag", pk, f"{flag}:{int(value)}")
         self.sync.request_ops()
         self._rebuild_drawer_soon()
+
+    def mark_answered(self, pk):
+        """Nach dem Antworten: Nachricht als beantwortet kennzeichnen (lokal sofort, auf dem Server vorgemerkt)."""
+        m = db.message(pk)
+        if not m:
+            return
+        db.set_flags(pk, answered=True)
+        if not m["archived"] and not DEMO:
+            db.queue_op("flag", pk, "\\Answered:1")
+            self.sync.request_ops()
+        for i in range(self.store.get_n_items()):
+            it = self.store.get_item(i)
+            if it.pk == pk:
+                it.d["answered"] = 1
+                self._refresh_item(it)
+
+    def mark_view_read(self, view):
+        """„Ordner als gelesen markieren“: alle ungelesenen Nachrichten der Ansicht (lokal sofort, Server vorgemerkt)."""
+        rows = [r for r in db.query(view, "", 1_000_000, 0) if not r["seen"]]
+        for r in rows:
+            db.set_flags(r["id"], seen=True)
+            if not r["archived"] and not DEMO:
+                db.queue_op("flag", r["id"], "\\Seen:1")
+        for i in range(self.store.get_n_items()):
+            it = self.store.get_item(i)
+            if not it.d["seen"]:
+                it.d["seen"] = 1
+                self._refresh_item(it)
+        self.sync.request_ops()
+        self._rebuild_drawer()
+        self.toast(ngettext("{n} message marked as read", "{n} messages marked as read", len(rows)).format(n=len(rows))
+                   if rows else _("No unread messages"))
+
+    def _nav_menu(self, node, widget, x, y):
+        """Kontextmenü eines Ordners im Ordnerbaum."""
+        if not node.view or node.view.get("kind") in ("flagged", "drafts"):
+            return
+        pop = Gtk.Popover(has_arrow=False)
+        pop.set_parent(widget)
+        rect = Gdk.Rectangle()
+        rect.x, rect.y, rect.width, rect.height = int(x), int(y), 1, 1
+        pop.set_pointing_to(rect)
+        btn = Gtk.Button(label=_("Mark folder as read"), sensitive=node.count > 0)
+        btn.add_css_class("flat")
+        btn.connect("clicked", lambda *_a: (pop.popdown(), self.mark_view_read(node.view)))
+        pop.set_child(btn)
+        pop.connect("closed", lambda p: GLib.idle_add(p.unparent))
+        pop.popup()
 
     def _rebuild_drawer_soon(self):
         GLib.idle_add(lambda: self._rebuild_drawer() and False)

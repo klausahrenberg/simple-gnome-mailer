@@ -194,6 +194,8 @@ def _remote_ids(pks):
 
 
 def set_flag(pks, flag, on):
+    if flag not in ("\\Seen", "\\Flagged"):
+        return                                  # z. B. \\Answered: Graph kennt das nicht, nur lokal vermerkt
     for acc, m in _remote_ids(pks):
         body = ({"isRead": bool(on)} if flag == "\\Seen"
                 else {"flag": {"flagStatus": "flagged" if on else "notFlagged"}})

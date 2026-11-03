@@ -67,12 +67,14 @@ END;
 # (großen) Nachrichtenzeilen anfassen – Spalten hinter dem Text (seen, flagged …) liegen sonst hinter den
 # Overflow-Seiten von body_text/body_html.
 INDEXES = """
-CREATE INDEX IF NOT EXISTS idx_msg_list2 ON messages(date DESC, account_id, folder, hidden, subject, from_name, from_addr,
-  snippet, seen, flagged, has_att, has_cal, to_addrs, archived, uid);
-CREATE INDEX IF NOT EXISTS idx_msg_folder_list2 ON messages(account_id, folder, date DESC, hidden, subject, from_name,
-  from_addr, snippet, seen, flagged, has_att, has_cal, to_addrs, archived, uid);
+CREATE INDEX IF NOT EXISTS idx_msg_list3 ON messages(date DESC, account_id, folder, hidden, subject, from_name, from_addr,
+  snippet, seen, flagged, answered, has_att, has_cal, to_addrs, archived, uid);
+CREATE INDEX IF NOT EXISTS idx_msg_folder_list3 ON messages(account_id, folder, date DESC, hidden, subject, from_name,
+  from_addr, snippet, seen, flagged, answered, has_att, has_cal, to_addrs, archived, uid);
 CREATE INDEX IF NOT EXISTS idx_msg_unread2 ON messages(seen, hidden, account_id, folder);
 CREATE INDEX IF NOT EXISTS idx_msg_flagged2 ON messages(flagged, hidden, account_id, folder);
+DROP INDEX IF EXISTS idx_msg_list2;
+DROP INDEX IF EXISTS idx_msg_folder_list2;
 DROP INDEX IF EXISTS idx_msg_folder;
 DROP INDEX IF EXISTS idx_msg_list;
 DROP INDEX IF EXISTS idx_msg_folder_list;
@@ -130,6 +132,8 @@ def conn():
             c.execute('ALTER TABLE messages ADD COLUMN remote_id TEXT')
         if 'title' not in {r[1] for r in c.execute('PRAGMA table_info(folders)')}:
             c.execute('ALTER TABLE folders ADD COLUMN title TEXT')
+        if 'answered' not in mcols:      # 1 = beantwortet (IMAP \\Answered bzw. lokal nach dem Antworten)
+            c.execute('ALTER TABLE messages ADD COLUMN answered INTEGER DEFAULT 0')
         if 'hidden' not in mcols:        # 1 = lokal bereits gelöscht/verschoben, Serveraktion steht noch aus
             c.execute('ALTER TABLE messages ADD COLUMN hidden INTEGER DEFAULT 0')
         if 'archived' not in mcols:      # 1 = nur lokal vorhanden (Archiv/Import), nicht (mehr) auf dem Server
@@ -277,13 +281,15 @@ def is_recent(pk, seconds=90):
     return time.time() - _recent.get(pk, 0) < seconds or pk in _flag_pending()
 
 
-def set_flags(pk, seen=None, flagged=None):
+def set_flags(pk, seen=None, flagged=None, answered=None):
     _recent[pk] = time.time()
     c = conn()
     if seen is not None:
         c.execute("UPDATE messages SET seen=? WHERE id=?", (int(seen), pk))
     if flagged is not None:
         c.execute("UPDATE messages SET flagged=? WHERE id=?", (int(flagged), pk))
+    if answered is not None:
+        c.execute("UPDATE messages SET answered=? WHERE id=?", (int(answered), pk))
     c.commit()
 
 
@@ -436,7 +442,7 @@ def query(view, search="", limit=300, offset=0, sort="date_desc"):
         args.append(q)
     sql = (
         "SELECT m.id, m.account_id, m.folder, m.uid, m.subject, m.from_name, m.from_addr, m.date, "
-        "m.snippet, m.seen, m.flagged, m.has_att, m.has_cal, m.to_addrs, m.archived FROM messages m "
+        "m.snippet, m.seen, m.flagged, m.answered, m.has_att, m.has_cal, m.to_addrs, m.archived FROM messages m "
         f"{join} WHERE {' AND '.join(where) or '1'} ORDER BY {SORTS.get(sort, SORTS['date_desc'])} LIMIT ? OFFSET ?"
     )
     return conn().execute(sql, (*args, limit, offset)).fetchall()

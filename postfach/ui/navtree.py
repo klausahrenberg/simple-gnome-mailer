@@ -26,8 +26,8 @@ def _flatten(nodes, depth=0):
 
 
 class NavTree:
-    def __init__(self, on_view):
-        self.on_view = on_view
+    def __init__(self, on_view, on_menu=None):
+        self.on_view, self.on_menu = on_view, on_menu
         self.current = {"kind": "unified"}
         self._guard = False
         self._sig = None
@@ -60,6 +60,10 @@ class NavTree:
         for w in (box.icon, box.dot, box.label, box.count, box.total):
             box.append(w)
         exp.set_child(box)
+        click = Gtk.GestureClick(button=3)      # Rechtsklick: Kontextmenü
+        click.connect("pressed", lambda g, n, x, y, b=box: self.on_menu and getattr(b, "_node", None)
+                      and self.on_menu(b._node, b, x, y))
+        box.add_controller(click)
         li.set_child(exp)
 
     def _bind(self, _f, li):

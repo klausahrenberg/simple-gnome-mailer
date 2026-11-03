@@ -24,6 +24,18 @@ target = []   # Verfassen-Fenster (Option composeshot) statt Hauptfenster aufneh
 
 
 def shoot():
+    if os.environ.get("HDR_DEBUG"):
+        w_ = app.props.active_window
+        t_ = w_.reader.to
+        print("overflow", t_.overflow, "more visible", t_.more.get_visible(), "flow", t_.flow.get_width(), t_.flow.get_height(), "scroll", t_.scroll.get_width(), t_.scroll.get_height())
+        c_ = t_.flow.get_first_child()
+        while c_:
+            print(" child", c_.compute_bounds(t_.flow)); c_ = c_.get_next_sibling()
+    if os.environ.get("RECIP_DEBUG") and target:
+        c = target[0]
+        for r in (c.from_row, c.to_row, c.sub_row):
+            print(type(r).__name__, r.get_height(), r.measure(Gtk.Orientation.VERTICAL, -1)[:2])
+        print("flow", c.to_row.flow.get_height(), "text", c.to_row.text.get_height(), c.to_row.text.measure(Gtk.Orientation.VERTICAL, -1)[:2])
     win = target[0] if target else app.props.active_window
     p = Gtk.WidgetPaintable.new(win)
     snap = Gtk.Snapshot()
@@ -39,7 +51,7 @@ def shoot():
 def fill_compose():
     c = target[0]
     c.set_default_size(w, h)
-    c.to_row.set_text("lena@example.net")
+    c.to_row.set_text("Lena Hoffmann <lena@example.net>, Jonas Keller <jonas@example.net>, studio@example.net")
     c.sub_row.set_text("Wochenend-Wanderung am Samstag")
     c.cc_btn.set_active(False)
     c.web.grab_focus()
@@ -86,7 +98,9 @@ def prep():
             win.activate_action(f"win.{o}", None)
         if o.startswith("search="):
             win.search.set_text(o[7:])
-    GLib.timeout_add(5000 if "composeshot" in opts else 2200, shoot)
+    if os.environ.get("HDR_TOGGLE"):
+        GLib.timeout_add(1800, lambda: (win.reader.to.toggle(), False)[1])
+    GLib.timeout_add(5000 if "composeshot" in opts else (2800 if os.environ.get("HDR_TOGGLE") else 2200), shoot)
     return False
 
 

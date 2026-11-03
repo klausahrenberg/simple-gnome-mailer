@@ -17,6 +17,7 @@ from email.utils import getaddresses
 
 from .. import addressbook, config, contacts, db, imageshrink, imapsync, logos, mailparse
 from . import openfile
+from .recipients import AddressCompleter, RecipientRow
 from ..i18n import _, ngettext
 
 CSP = "default-src 'none'; img-src data:; style-src 'unsafe-inline'"   # Skripte der zitierten Mail bleiben blockiert
@@ -34,126 +35,15 @@ def _size(n):
     return f"{n / 1024:.0f} KB" if n < 1024 * 1024 else f"{n / 1024 / 1024:.1f} MB"
 
 
-def make_avatar(name, addr, size):
-    """Adw.Avatar mit Kontaktfoto, Firmenlogo oder Initialen – wie in der Nachrichtenliste."""
-    av = Adw.Avatar(size=size, show_initials=True, text=name or addr or "?")
-    av.set_custom_image(contacts.texture(addr) or logos.texture(name, addr))
-    return av
-
-
-class AddressCompleter:
-    """Vorschläge unter einem Adressfeld (An/Cc/Bcc): Kontakte und bisherige Empfänger; mehrere Adressen per Komma."""
-
-    def __init__(self, row):
-        self.row, self.items, self._busy = row, [], False
-        self.pop = Gtk.Popover(autohide=False, has_arrow=False, position=Gtk.PositionType.BOTTOM, halign=Gtk.Align.START)
-        self.pop.set_parent(row)
-        self.pop.set_can_focus(False)
-        self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.SINGLE, can_focus=False)
-        self.list.add_css_class("navigation-sidebar")
-        self.list.connect("row-activated", lambda _l, r: self._choose(r.idx))
-        self.pop.set_child(self.list)
-        self.avatar_box = Gtk.Box(valign=Gtk.Align.CENTER, visible=False)
-        row.add_prefix(self.avatar_box)
-        row.connect("changed", self._changed)
-        row.connect("changed", lambda *_: self.refresh_avatar())
-        row.connect("destroy", lambda *_: self.pop.unparent())
-        keys = Gtk.EventControllerKey(propagation_phase=Gtk.PropagationPhase.CAPTURE)
-        keys.connect("key-pressed", self._key)
-        row.add_controller(keys)
-        focus = Gtk.EventControllerFocus()
-        focus.connect("leave", lambda *_: GLib.timeout_add(150, lambda: (self.pop.popdown(), False)[1]))
-        row.add_controller(focus)
-
-    def refresh_avatar(self):
-        """Symbol (Foto/Logo/Initialen) des ersten Empfängers im Feld; keine Zeilenhöhe zusätzlich."""
-        while (c := self.avatar_box.get_first_child()):
-            self.avatar_box.remove(c)
-        first = next(((n, a) for n, a in getaddresses([self.row.get_text()]) if "@" in a), None)
-        self.avatar_box.set_visible(bool(first))
-        if first:
-            self.avatar_box.append(make_avatar(first[0], first[1], 28))
-
-    def _token(self):
-        text, pos = self.row.get_text(), self.row.get_position()
-        pos = len(text) if pos < 0 else pos
-        start = max(text.rfind(",", 0, pos), text.rfind(";", 0, pos)) + 1
-        return start, pos, text[start:pos].strip()
-
-    def _changed(self, *_):
-        # die Cursorposition steht erst nach dem „changed“-Signal fest → im Leerlauf auswerten
-        if not self._busy and not getattr(self, "_pending", False):
-            self._pending = True
-            GLib.idle_add(self._update)
-
-    def _update(self):
-        self._pending = False
-        _s, _e, tok = self._token()
-        self.items = addressbook.suggest(tok) if len(tok) >= 1 and "<" not in tok else []
-        while (c := self.list.get_first_child()):
-            self.list.remove(c)
-        for i, (name, addr) in enumerate(self.items):
-            r = Gtk.ListBoxRow()
-            r.idx = i
-            h = Gtk.Box(spacing=10, margin_top=4, margin_bottom=4, margin_start=8, margin_end=8)
-            h.append(make_avatar(name, addr, 28))
-            b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, valign=Gtk.Align.CENTER)
-            if name:
-                b.append(Gtk.Label(label=name, xalign=0))
-                sub = Gtk.Label(label=addr, xalign=0)
-                sub.add_css_class("dim-label")
-                sub.add_css_class("caption")
-                b.append(sub)
-            else:
-                b.append(Gtk.Label(label=addr, xalign=0))
-            h.append(b)
-            r.set_child(h)
-            self.list.append(r)
-        if self.items:
-            self.pop.set_size_request(max(280, self.row.get_width() - 24), -1)
-            self.list.select_row(self.list.get_row_at_index(0))
-            self.pop.popup()
-        else:
-            self.pop.popdown()
-        return False
-
-    def _choose(self, idx):
-        name, addr = self.items[idx]
-        start, end, _tok = self._token()
-        text = self.row.get_text()
-        new = text[:start].rstrip() + (" " if text[:start].strip() else "") + addressbook.format_entry(name, addr) + ", "
-        self._busy = True
-        self.row.set_text(new + text[end:].lstrip())
-        self.row.set_position(len(new))
-        self._busy = False
-        self.pop.popdown()
-
-    def _key(self, _c, keyval, _code, _state):
-        if not self.pop.get_visible() or not self.items:
-            return False
-        cur = self.list.get_selected_row()
-        i = cur.idx if cur else 0
-        if keyval in (Gdk.KEY_Down, Gdk.KEY_Up):
-            i = (i + (1 if keyval == Gdk.KEY_Down else -1)) % len(self.items)
-            self.list.select_row(self.list.get_row_at_index(i))
-            return True
-        if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter, Gdk.KEY_Tab):
-            self._choose(i)
-            return True
-        if keyval == Gdk.KEY_Escape:
-            self.pop.popdown()
-            return True
-        return False
-
-
 class ComposeWindow(Adw.Window):
     """Verfassen: formatiert (HTML, Standard) oder Nur-Text; Anhänge per Knopf, Ziehen und Einfügen (Strg+V)."""
 
     def __init__(self, parent, account_id=None, to="", cc="", bcc="", subject="", body="", body_html=None,
-                 in_reply_to=None, references=None, attachments=None):
+                 in_reply_to=None, references=None, attachments=None, reply_pk=None):
         super().__init__(transient_for=parent, default_width=760, default_height=700, title=_("New message"))
         self.parent_win = parent
         self.in_reply_to, self.references = in_reply_to, references
+        self.reply_pk = reply_pk                       # Nachricht, auf die geantwortet wird (wird danach als beantwortet markiert)
         self.accs = list(db.mail_accounts())
         self.attachments = list(attachments or [])
         self.web = None
@@ -196,16 +86,19 @@ class ComposeWindow(Adw.Window):
             for i, a in enumerate(self.accs):
                 if a["id"] == account_id:
                     self.from_row.set_selected(i)
-        self.to_row = Adw.EntryRow(title=_("To"), text=to)
-        self.cc_row = Adw.EntryRow(title="Cc", text=cc)
-        self.bcc_row = Adw.EntryRow(title="Bcc", text=bcc)
+        self.to_row = RecipientRow(_("To"), to)
+        self.cc_row = RecipientRow("Cc", cc)
+        self.bcc_row = RecipientRow("Bcc", bcc)
         self.sub_row = Adw.EntryRow(title=_("Subject"), text=subject)
         for r in (self.from_row, self.to_row, self.cc_row, self.bcc_row, self.sub_row):
             fields.append(r)
+        self._dragging, self._drag_prev = False, {}
+        for r in (self.to_row, self.cc_row, self.bcc_row):
+            r.on_drag = self._drag_state
         self.completers = [AddressCompleter(r) for r in (self.to_row, self.cc_row, self.bcc_row)]
         for btn, row in ((self.cc_btn, self.cc_row), (self.bcc_btn, self.bcc_row)):
             btn.bind_property("active", row, "visible", GObject.BindingFlags.SYNC_CREATE)
-            btn.connect("toggled", lambda b, r=row: b.get_active() and r.grab_focus())
+            btn.connect("toggled", lambda b, r=row: b.get_active() and not self._dragging and r.grab_focus())
         box.append(fields)
 
         self.chips = Adw.WrapBox(child_spacing=6, line_spacing=6, margin_start=12, margin_end=12, margin_bottom=6)
@@ -227,14 +120,12 @@ class ComposeWindow(Adw.Window):
         if self.html_mode:
             self._ensure_web(body_html)
         self._show_mode()
-        self._init = (to, cc, bcc, subject, body, len(self.attachments))     # Ausgangszustand für „bereits begonnen?“
+        self._init = (self.to_row.get_text(), self.cc_row.get_text(), self.bcc_row.get_text(), subject, body, len(self.attachments))     # Ausgangszustand für „bereits begonnen?“
         self._force = self._asking_close = False
         self.connect("close-request", self._on_close)
-        self._logo_cb = lambda: [c.refresh_avatar() for c in self.completers]   # nachgeladene Logos nachzeichnen
+        self._logo_cb = lambda: [r.refresh() for r in (self.to_row, self.cc_row, self.bcc_row)]   # nachgeladene Logos nachzeichnen
         logos.on_ready(self._logo_cb)
         self.connect("destroy", lambda *_: logos.off_ready(self._logo_cb))
-        for c in self.completers:
-            c.refresh_avatar()
 
         # Dateien ablegen (Ziehen aus der Dateiverwaltung) – vor dem Editor abfangen
         drop = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
@@ -250,6 +141,19 @@ class ComposeWindow(Adw.Window):
         tv.set_content(self.toasts)
         self.set_content(tv)
         (self.to_row if not to else self._editor()).grab_focus()
+
+    def _drag_state(self, on):
+        """Beim Ziehen einer Empfänger-Bubble Cc/Bcc einblenden (zum Ablegen); danach leere wieder ausblenden."""
+        if on:
+            self._dragging = True
+            self._drag_prev = {b: b.get_active() for b in (self.cc_btn, self.bcc_btn)}
+            for b in self._drag_prev:
+                b.set_active(True)
+        else:
+            for b, row in ((self.cc_btn, self.cc_row), (self.bcc_btn, self.bcc_row)):
+                if not self._drag_prev.get(b, True) and not row.get_text():
+                    b.set_active(False)
+            self._dragging = False
 
     # ---------------------------------------------------------- Format / Editor
     def _editor(self):
@@ -584,6 +488,8 @@ class ComposeWindow(Adw.Window):
     def _send(self, *_args):
         if not self.accs:
             return
+        for r in (self.to_row, self.cc_row, self.bcc_row):
+            r.commit()                                  # noch nicht übernommene Eingabe als Adresse aufnehmen
         if not self.to_row.get_text().strip(" ,;"):
             self.toasts.add_toast(Adw.Toast(title=_("Please enter a recipient")))
             return
@@ -616,6 +522,8 @@ class ComposeWindow(Adw.Window):
             self.toasts.add_toast(Adw.Toast(title=_("Sending failed: {error}").format(error=err), timeout=8))
         else:
             self.parent_win.toast(_("Message sent"))
+            if self.reply_pk:
+                self.parent_win.mark_answered(self.reply_pk)
             self.parent_win.sync.request()
             self._force = True
             GLib.idle_add(lambda: self.close() and False)

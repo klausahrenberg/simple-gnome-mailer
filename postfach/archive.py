@@ -22,7 +22,7 @@ def cutoff_ts(months, now=None):
     return datetime.datetime(y, m + 1, day).timestamp()
 
 
-def store(acc_id, folder, role, raw, seen, flagged, existing=None, remote_id=None):
+def store(acc_id, folder, role, raw, seen, flagged, existing=None, remote_id=None, answered=False):
     """Legt `raw` als lokal archivierte Nachricht ab (oder wandelt die vorhandene Zeile `existing` um).
     Gibt die pk zurück; None, wenn die Nachricht schon archiviert vorliegt (Duplikat)."""
     m = mailparse.parse(raw)
@@ -36,7 +36,7 @@ def store(acc_id, folder, role, raw, seen, flagged, existing=None, remote_id=Non
     dup = db.find_duplicate(role, m["message_id"], m["date"], m["subject"], m["from_addr"], archived_only=True)
     if dup:
         return None
-    m.update(account_id=acc_id, folder=folder, uid=db.next_local_uid(), seen=int(seen), flagged=int(flagged), archived=1)
+    m.update(account_id=acc_id, folder=folder, uid=db.next_local_uid(), seen=int(seen), flagged=int(flagged), answered=int(answered), archived=1)
     pk = db.insert_message(m, raw)
     db.conn().commit()
     return pk
@@ -86,11 +86,11 @@ def _imap_account(acc, cutoff, progress):
                     continue
                 safe = []
                 for meta, raw in _fetch_items(data):
-                    uid, seen, flagged = _parse_meta(meta)
+                    uid, seen, flagged, answered = _parse_meta(meta)
                     if not raw or uid is None:
                         continue
                     try:
-                        store(acc["id"], f["name"], f["role"], raw, seen, flagged, existing=local.get(uid))
+                        store(acc["id"], f["name"], f["role"], raw, seen, flagged, existing=local.get(uid), answered=answered)
                     except Exception:
                         continue          # nicht speicherbar -> auf dem Server lassen
                     safe.append(uid)

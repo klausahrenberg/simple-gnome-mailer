@@ -151,8 +151,104 @@ def _icon_urls(domain):
     return urls
 
 
+def _edge_color(pb):
+    """Randfarbe eines bildfüllenden Logos: Mittelwert der Randpunkte, wenn der Rand weitgehend deckend ist
+    (Farbflächen auch mit leichtem Verlauf, z. B. DHL); sonst None (durchsichtiger oder leerer Rand)."""
+    w, h, rs, ch, px = pb.get_width(), pb.get_height(), pb.get_rowstride(), pb.get_n_channels(), pb.get_pixels()
+    pts = [(x, y) for x in range(0, w, max(1, w // 24)) for y in (0, h - 1)]
+    pts += [(x, y) for y in range(0, h, max(1, h // 24)) for x in (0, w - 1)]
+    opaque = []
+    for x, y in pts:
+        i = y * rs + x * ch
+        if ch == 4 and px[i + 3] < 200:
+            continue
+        opaque.append((px[i], px[i + 1], px[i + 2]))
+    if len(opaque) < 0.7 * len(pts):         # abgerundete Ecken sind durchsichtig
+        return None
+    return tuple(sum(c[k] for c in opaque) // len(opaque) for k in range(3))
+
+
+def _near_white(c):
+    return min(c) >= 235
+
+
+def _content_box(pb):
+    """Rechteck (x, y, w, h) der sichtbaren, nicht weißen Bildpunkte – schneidet leere/weiße Ränder ab."""
+    w, h, rs, ch, px = pb.get_width(), pb.get_height(), pb.get_rowstride(), pb.get_n_channels(), pb.get_pixels()
+    x0, y0, x1, y1 = w, h, -1, -1
+    for y in range(h):
+        row = y * rs
+        for x in range(w):
+            i = row + x * ch
+            if (ch == 4 and px[i + 3] < 200) or min(px[i], px[i + 1], px[i + 2]) >= 235:
+                continue
+            if x < x0:
+                x0 = x
+            if x > x1:
+                x1 = x
+            if y < y0:
+                y0 = y
+            if y > y1:
+                y1 = y
+    if x1 < 0:
+        return None
+    return x0, y0, x1 - x0 + 1, y1 - y0 + 1
+
+
+def _dominant_color(pb, box):
+    """Vorherrschende Farbe innerhalb des Logo-Rechtecks, wenn sie dessen Fläche deutlich (≥ 45 %) bedeckt – eine Farbfläche,
+    auf der das Logo sitzt (LinkedIn-Blau, DHL-Gelb) –, sonst None."""
+    bx, by, bw, bh = box
+    w, rs, ch, px = pb.get_width(), pb.get_rowstride(), pb.get_n_channels(), pb.get_pixels()
+    buckets, step = {}, 2
+    for y in range(by, by + bh, step):
+        for x in range(bx, bx + bw, step):
+            i = y * rs + x * ch
+            if ch == 4 and px[i + 3] < 200:
+                continue
+            c = (px[i], px[i + 1], px[i + 2])
+            if min(c) >= 235:
+                continue
+            b = buckets.setdefault((c[0] >> 4, c[1] >> 4, c[2] >> 4), [0, 0, 0, 0])
+            b[0] += 1
+            for k in range(3):
+                b[k + 1] += c[k]
+    if not buckets:
+        return None
+    best = max(buckets.values(), key=lambda b: b[0])
+    if best[0] * step * step < 0.45 * bw * bh:
+        return None
+    color = tuple(best[k + 1] // best[0] for k in range(3))
+    # eine Farbfläche reicht bis an den Rand des Logos – eine bloße Figur (PayPal-„P“) nicht, sonst verschwände sie
+    pts = [(x, by + yy) for x in range(bx, bx + bw, max(1, bw // 24)) for yy in (0, bh - 1)]
+    pts += [(bx + xx, y) for y in range(by, by + bh, max(1, bh // 24)) for xx in (0, bw - 1)]
+    near = 0
+    for x, y in pts:
+        i = y * rs + x * ch
+        if (ch == 4 and px[i + 3] < 200) or max(abs(px[i + k] - color[k]) for k in range(3)) > 48:
+            continue
+        near += 1
+    return color if near >= 0.4 * len(pts) else None
+
+
+def _color_box(pb, color):
+    """Rechteck (x, y, w, h) der Punkte in der Farbe `color` – die Farbfläche selbst, ohne Beiwerk wie das ®-Zeichen."""
+    w, h, rs, ch, px = pb.get_width(), pb.get_height(), pb.get_rowstride(), pb.get_n_channels(), pb.get_pixels()
+    x0, y0, x1, y1 = w, h, -1, -1
+    for y in range(h):
+        row = y * rs
+        for x in range(w):
+            i = row + x * ch
+            if (ch == 4 and px[i + 3] < 200) or max(abs(px[i + k] - color[k]) for k in range(3)) > 48:
+                continue
+            x0, x1 = min(x0, x), max(x1, x)
+            y0, y1 = min(y0, y), max(y1, y)
+    return (x0, y0, x1 - x0 + 1, y1 - y0 + 1) if x1 >= 0 else None
+
+
 def _render(data):
-    """Bild → 96-px-PNG: Logo zentriert auf weißem Grund (dunkle Logos bleiben auf dunklem Theme sichtbar)."""
+    """Bild → 96-px-PNG: Logo zentriert; eckige Logos mit eigener Hintergrundfarbe bekommen diese Farbe als Grund,
+    alle anderen weißen Grund (dunkle Logos bleiben auf dunklem Theme sichtbar)."""
     loader = GdkPixbuf.PixbufLoader()
 
     def prepared(l, w, h):          # Vektorgrafiken (BIMI-SVG) in brauchbarer Größe rendern
@@ -169,13 +265,31 @@ def _render(data):
     pb = loader.get_pixbuf()
     if pb is None or pb.get_width() < 16 or pb.get_height() < 16:
         return None
-    inner = int(SIZE * 0.68)
+    bg = _edge_color(pb)
+    fill = bg is not None and not _near_white(bg)      # bildfüllende Farbfläche (DHL): füllt das ganze Symbol
+    if not fill:
+        # weißer/durchsichtiger Rand um das Logo: Rand abschneiden; sitzt es auf einer Farbfläche (LinkedIn), diese als Grund
+        box = _content_box(pb)
+        bg = None
+        if box and box[2] >= 12 and box[3] >= 12:
+            if box[2] * box[3] < 0.95 * pb.get_width() * pb.get_height():
+                pb = pb.new_subpixbuf(*box)
+                box = (0, 0, box[2], box[3])
+            color = _dominant_color(pb, box)
+            if color:
+                bg = color
+                field = _color_box(pb, color)               # nur die Farbfläche behalten (Beiwerk wie ® liegt außerhalb)
+                if field and field[2] >= 12 and field[3] >= 12:
+                    if field[2] * field[3] < 0.98 * pb.get_width() * pb.get_height():
+                        pb = pb.new_subpixbuf(*field)
+                    fill = True
+    inner = SIZE if fill else int(SIZE * (0.8 if bg else 0.68))    # Logo auf Farbfläche etwas größer als auf Weiß
     scale = min(inner / pb.get_width(), inner / pb.get_height())
     w, h = max(1, int(pb.get_width() * scale)), max(1, int(pb.get_height() * scale))
     pb = pb.scale_simple(w, h, GdkPixbuf.InterpType.HYPER)
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, SIZE, SIZE)
     ctx = cairo.Context(surf)
-    ctx.set_source_rgb(1, 1, 1)
+    ctx.set_source_rgb(*((c / 255 for c in bg) if bg else (1, 1, 1)))
     ctx.paint()
     # Pixbuf (RGBA, gerade Alpha) → cairo (BGRA, vormultipliziert)
     px, rs, ch = pb.get_pixels(), pb.get_rowstride(), pb.get_n_channels()
@@ -245,11 +359,11 @@ def _fetch(domain):
 
 def _purge_old_misses():
     """Neue Quellen (BIMI, www): frühere „kein Logo“-Ergebnisse einmalig verwerfen."""
-    marker = os.path.join(CACHE, ".v2")
+    marker = os.path.join(CACHE, ".v7")          # v7: Farbfläche ohne Beiwerk (LinkedIn-®) zuschneiden -> alle Logos neu rendern
     if os.path.exists(marker):
         return
     for f in os.listdir(CACHE):
-        if f.endswith(".none"):
+        if f.endswith((".none", ".png")):
             os.remove(os.path.join(CACHE, f))
     open(marker, "w").close()
 

@@ -14,6 +14,7 @@ from gi.repository import Adw, Gio, GLib, Gtk, Pango, WebKit
 from .. import config, contacts, db, logos, mailparse
 from . import openfile
 from .invitecard import InviteCard
+from .recipients import BubbleStrip, parse_addresses
 from .. import invite
 from ..i18n import _
 from ..mailparse import display_subject
@@ -44,18 +45,14 @@ class Reader(Gtk.Box):
         self.subject = Gtk.Label(xalign=0, wrap=True, selectable=True)
         self.subject.add_css_class("title-2")
         head.append(self.subject)
+        # Absender und Empfänger als Bubbles (wie im Verfassen-Fenster); Empfänger zunächst eine Zeile, Klick klappt auf
         who = Gtk.Box(spacing=12)
-        self.avatar = Adw.Avatar(size=44, show_initials=True)
-        who.append(self.avatar)
-        txt = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True)
-        self.sender = Gtk.Label(xalign=0, selectable=True, ellipsize=Pango.EllipsizeMode.END)
-        self.sender.add_css_class("heading")
-        self.to = Gtk.Label(xalign=0, ellipsize=Pango.EllipsizeMode.END, selectable=True)
-        self.to.add_css_class("dim-label")
-        self.to.add_css_class("caption")
-        txt.append(self.sender)
-        txt.append(self.to)
-        who.append(txt)
+        left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        self.sender = BubbleStrip(_("From"))
+        self.to = BubbleStrip(_("To"))
+        left.append(self.sender)
+        left.append(self.to)
+        who.append(left)
         self.date = Gtk.Label(xalign=1, valign=Gtk.Align.START)
         self.date.add_css_class("dim-label")
         self.date.add_css_class("caption")
@@ -121,10 +118,13 @@ class Reader(Gtk.Box):
         self.raw = db.raw_message(pk)
         name = row["from_name"] or row["from_addr"]
         self.subject.set_text(display_subject(row["subject"]))
-        self.avatar.set_text(name)
-        self.avatar.set_custom_image(contacts.texture(row["from_addr"]) or logos.texture(name, row["from_addr"]))
-        self.sender.set_text(f"{name} <{row['from_addr']}>" if row["from_name"] and row["from_name"] != row["from_addr"] else name)
-        self.to.set_text(_("To: {recipients}").format(recipients=row["to_addrs"] or _("hidden recipients (BCC)")))
+        self.sender.set_addresses([(row["from_name"] or "", row["from_addr"] or name)])
+        pairs = parse_addresses(row["to_addrs"])
+        own = {(a["email"] or "").lower() for a in db.mail_accounts()}
+        others = [p for p in pairs if p[1].lower() not in own]
+        # nur ich als Empfänger: Zeile ausblenden; sonst die anderen zuerst, meine eigene Adresse am Ende
+        self.to.set_visible(not pairs or bool(others))
+        self.to.set_addresses(others + [p for p in pairs if p[1].lower() in own], empty_text=_("hidden recipients (BCC)"))
         self.date.set_text(time.strftime(_("%Y-%m-%d %H:%M"), time.localtime(row["date"] or 0)))
         self._attachments()
         inv = None

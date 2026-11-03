@@ -92,6 +92,12 @@ def texture(email):
     return tex
 
 
+def name_for(email):
+    """Name des Kontakts zu dieser Adresse (GNOME-Kontakte) oder ""."""
+    with _lock:
+        return _people.get((email or "").lower(), "")
+
+
 def people():
     """[(Name, Adresse)] aller Kontakte mit E-Mail-Adresse."""
     with _lock:

@@ -255,7 +255,6 @@
  "This event was cancelled.": "Dieser Termin wurde abgesagt.",
  "Thursday": "Donnerstag",
  "To": "An",
- "To: {recipients}": "An: {recipients}",
  "Trash": "Papierkorb",
  "Tuesday": "Dienstag",
  "Underline": "Unterstrichen",
@@ -369,5 +368,9 @@
  "{n} changes waiting": "{n} Änderungen warten",
  "No connection – the app keeps checking quietly.": "Keine Verbindung – die App prüft im Hintergrund weiter.",
  "{n} change will be sent to the server.": "{n} Änderung wird an den Server gesendet.",
- "{n} changes will be sent to the server.": "{n} Änderungen werden an den Server gesendet."
+ "{n} changes will be sent to the server.": "{n} Änderungen werden an den Server gesendet.",
+ "You replied to this message": "Du hast diese Nachricht beantwortet",
+ "Mark folder as read": "Ordner als gelesen markieren",
+ "{n} message marked as read": "{n} Nachricht als gelesen markiert",
+ "{n} messages marked as read": "{n} Nachrichten als gelesen markiert"
 }

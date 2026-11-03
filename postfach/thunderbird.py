@@ -205,12 +205,12 @@ def iter_maildir(path):
 
 
 def _flags(raw):
-    """(gelesen, markiert, gelöscht) aus X-Mozilla-Status; ohne Angabe gilt die Nachricht als gelesen."""
+    """(gelesen, markiert, gelöscht, beantwortet) aus X-Mozilla-Status; ohne Angabe gilt die Nachricht als gelesen."""
     m = MOZ_STATUS.search(raw[:8192])
     if not m:
-        return True, False, False
+        return True, False, False, False
     v = int(m.group(1), 16)
-    return bool(v & 1), bool(v & 4), bool(v & 8)
+    return bool(v & 1), bool(v & 4), bool(v & 8), bool(v & 2)
 
 
 def identities(profile):
@@ -304,7 +304,7 @@ def run_import(sources, progress=None, cancel=None, own=()):
                 return stats
             done += len(raw)
             n += 1
-            seen, flagged, deleted = _flags(raw)
+            seen, flagged, deleted, answered = _flags(raw)
             if deleted or not raw.strip() or is_junk(raw):
                 stats["skipped"] += 1
                 continue
@@ -318,7 +318,7 @@ def run_import(sources, progress=None, cancel=None, own=()):
                     continue
                 acc_id, folder = _target(role, m, src, accounts, cache)
                 m.update(account_id=acc_id, folder=folder, uid=db.next_local_uid(), seen=int(seen),
-                         flagged=int(flagged), archived=1)
+                         flagged=int(flagged), answered=int(answered), archived=1)
                 if db.insert_message(m, raw):
                     stats["imported"] += 1
             except Exception:

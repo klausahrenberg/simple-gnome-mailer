@@ -170,7 +170,7 @@ def _parse_meta(meta):
     uid = re.search(rb"UID (\d+)", meta)
     flags = re.search(rb"FLAGS \(([^)]*)\)", meta)
     fl = flags.group(1).lower().split() if flags else []
-    return (int(uid.group(1)) if uid else None, b"\\seen" in fl, b"\\flagged" in fl)
+    return (int(uid.group(1)) if uid else None, b"\\seen" in fl, b"\\flagged" in fl, b"\\answered" in fl)
 
 
 def sync_folder(im, acc, folder, depth, on_batch=None, on_new=None):
@@ -216,9 +216,9 @@ def sync_folder(im, acc, folder, depth, on_batch=None, on_new=None):
             typ, data = im.uid("FETCH", ",".join(map(str, part)), "(FLAGS BODY.PEEK[])")
             if typ == "OK":
                 for meta, raw in _fetch_items(data):
-                    uid, seen, flagged = _parse_meta(meta)
+                    uid, seen, flagged, answered = _parse_meta(meta)
                     if raw is not None and uid is not None:
-                        got.append((uid, seen, flagged, raw, False))
+                        got.append((uid, seen, flagged, answered, raw, False))
         for u in big:
             typ, data = im.uid("FETCH", str(u), "(FLAGS BODY.PEEK[HEADER] BODY.PEEK[TEXT]<0.60000>)")
             if typ != "OK":
@@ -228,9 +228,9 @@ def sync_folder(im, acc, folder, depth, on_batch=None, on_new=None):
             text = next((raw for m_, raw in items if raw is not None and b"TEXT" in m_.upper()), b"")
             if head is not None:
                 meta = b" ".join(m_ for m_, _ in items)
-                uid, seen, flagged = _parse_meta(meta)
-                got.append((u, seen, flagged, head + text, True))
-        for uid, seen, flagged, raw, trunc in got:
+                uid, seen, flagged, answered = _parse_meta(meta)
+                got.append((u, seen, flagged, answered, head + text, True))
+        for uid, seen, flagged, answered, raw, trunc in got:
             try:
                 m = mailparse.parse(raw)
             except Exception:
@@ -238,7 +238,7 @@ def sync_folder(im, acc, folder, depth, on_batch=None, on_new=None):
             if trunc:
                 m["has_att"] = 1
                 m["partial"] = 1
-            m.update(account_id=acc["id"], folder=folder, uid=uid, seen=int(seen), flagged=int(flagged))
+            m.update(account_id=acc["id"], folder=folder, uid=uid, seen=int(seen), flagged=int(flagged), answered=int(answered))
             if db.insert_message(m, raw):
                 added += 1
                 if on_new and local and not seen:
@@ -255,9 +255,10 @@ def sync_folder(im, acc, folder, depth, on_batch=None, on_new=None):
                 if not line:
                     continue
                 line = line if isinstance(line, bytes) else line[0]
-                uid, seen, flagged = _parse_meta(line)
+                uid, seen, flagged, answered = _parse_meta(line)
                 if uid in local and not db.is_recent(local[uid]):
-                    c.execute("UPDATE messages SET seen=?, flagged=? WHERE id=?", (int(seen), int(flagged), local[uid]))
+                    c.execute("UPDATE messages SET seen=?, flagged=?, answered=? WHERE id=?",
+                              (int(seen), int(flagged), int(answered), local[uid]))
     c.commit()
     if fresh and on_new:
         for f in fresh:

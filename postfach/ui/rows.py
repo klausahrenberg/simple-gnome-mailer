@@ -78,6 +78,9 @@ class MessageRow(Gtk.Box):
         self.sender.set_hexpand(True)
         self.clip = Gtk.Image.new_from_icon_name("mail-attachment-symbolic")
         self.clip.add_css_class("dim-label")
+        self.replied = Gtk.Image.new_from_icon_name("mail-replied-symbolic")
+        self.replied.add_css_class("dim-label")
+        self.replied.set_tooltip_text(_("You replied to this message"))
         self.cal = Gtk.Image.new_from_icon_name("x-office-calendar-symbolic")
         self.cal.add_css_class("dim-label")
         self.cal.set_tooltip_text(_("Calendar invitation"))
@@ -89,7 +92,7 @@ class MessageRow(Gtk.Box):
         self.star.connect("clicked", lambda *_: self._item and self._item.on_star and self._item.on_star(self._item))
         self._item, self._hid = None, None
         self.date = _label(["caption", "dim-label", "numeric"], ellipsize=False, xalign=1.0)
-        for w in (self.sender, self.cal, self.clip, self.star, self.date):
+        for w in (self.sender, self.replied, self.cal, self.clip, self.star, self.date):
             top.append(w)
         col.append(top)
 
@@ -135,6 +138,7 @@ class MessageRow(Gtk.Box):
         self.preview.set_text(d["snippet"] or "")
         self.preview.set_lines(int(config.get("preview_lines")))
         self.clip.set_visible(bool(d["has_att"]))
+        self.replied.set_visible(bool(d["answered"]))
         self.cal.set_visible(bool(d["has_cal"]))
         self.star.set_visible(bool(d["flagged"]))
         self.acc.set_text(item.account_label)

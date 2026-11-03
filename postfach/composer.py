@@ -15,7 +15,13 @@ def _addrs(value):
 
 
 def _fmt(name, addr):
-    return f"{name} <{addr}>" if name and name != addr else addr
+    """„Name <adresse>“; Namen mit Sonderzeichen (z. B. Komma in „Boschi, Robert“) werden in Anführungszeichen gesetzt,
+    sonst zerfällt der Eintrag beim Einlesen in zwei Empfänger."""
+    if not name or name == addr:
+        return addr
+    if re.search(r'[,;:<>@()\[\]\\".]', name):
+        name = '"' + name.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    return f"{name} <{addr}>"
 
 
 def _prefixed(subject, prefix, variants):
@@ -90,7 +96,7 @@ def build_reply(row, raw, reply_all=False):
     who = row["from_name"] or row["from_addr"]
     head = _("On {when}, {who} wrote:").format(when=_when(row), who=who)
     out = {"account_id": row["account_id"], "to": ", ".join(to_out), "cc": ", ".join(cc_out),
-           "subject": reply_subject(row["subject"]), "in_reply_to": h.get("Message-ID") or None,
+           "subject": reply_subject(row["subject"]), "in_reply_to": h.get("Message-ID") or None, "reply_pk": row["id"],
            "references": h.get("References") or None, "body_html": None}
     if row["body_html"]:
         out["body_html"] = ('<div><br></div><div class="quote"><div>' + html.escape(head) + "</div>"
