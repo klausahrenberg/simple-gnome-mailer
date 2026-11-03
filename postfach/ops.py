@@ -29,7 +29,7 @@ def _run(kind, arg, pks):
         imapsync.remote_set_flag(pks, flag, on == "1")
     else:
         {"delete": imapsync.remote_delete, "spam": imapsync.remote_mark_spam, "notspam": imapsync.remote_not_spam,
-         "archive": imapsync.remote_move_archive}[kind](pks)
+         "archive": imapsync.remote_move_archive, "purge": imapsync.remote_purge}[kind](pks)
 
 
 def process():

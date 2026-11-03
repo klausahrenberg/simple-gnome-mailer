@@ -295,7 +295,7 @@ def set_flags(pk, seen=None, flagged=None, answered=None):
 
 # ---- Ausstehende Serveraktionen (Offline-Betrieb) ---------------------
 
-REMOVE_KINDS = ("delete", "spam", "notspam", "archive")
+REMOVE_KINDS = ("delete", "spam", "notspam", "archive", "purge")
 
 
 def _flag_pending():

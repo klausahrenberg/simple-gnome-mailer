@@ -372,5 +372,11 @@
  "You replied to this message": "Du hast diese Nachricht beantwortet",
  "Mark folder as read": "Ordner als gelesen markieren",
  "{n} message marked as read": "{n} Nachricht als gelesen markiert",
- "{n} messages marked as read": "{n} Nachrichten als gelesen markiert"
+ "{n} messages marked as read": "{n} Nachrichten als gelesen markiert",
+ "Save all attachments …": "Alle Anhänge speichern …",
+ "Save all attachments": "Alle Anhänge speichern",
+ "{n} attachment saved": "{n} Anhang gespeichert",
+ "{n} attachments saved": "{n} Anhänge gespeichert",
+ "This message is a draft": "Diese Nachricht ist ein Entwurf",
+ "Edit": "Bearbeiten"
 }

@@ -119,7 +119,7 @@ def parse(raw: bytes):
 
 def headers(raw: bytes):
     msg = email.message_from_bytes(raw, policy=POLICY)
-    return {k: _decode(msg[k]) for k in ("From", "To", "Cc", "Reply-To", "Subject", "Date", "Message-ID", "References")}
+    return {k: _decode(msg[k]) for k in ("From", "To", "Cc", "Bcc", "Reply-To", "In-Reply-To", "Subject", "Date", "Message-ID", "References")}
 
 
 def attachments(raw: bytes):

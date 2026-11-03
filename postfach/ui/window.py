@@ -243,6 +243,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.listview = Gtk.ListView(model=self.sel, factory=self.factory, single_click_activate=False,
                                    enable_rubberband=True)
         self.listview.add_css_class("navigation-sidebar")
+        self.listview.connect("activate", self._on_activate)
         self.scroll = Gtk.ScrolledWindow(child=self.listview, vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER)
         self.scroll.connect("edge-reached", self._edge)
 
@@ -731,6 +732,48 @@ class MainWindow(Adw.ApplicationWindow):
                 db.queue_op("flag", pk, f"{flag}:{int(value)}")
         self.sync.request_ops()
         self._rebuild_drawer_soon()
+
+    def is_draft(self, row):
+        return db.folder_by_role(row["account_id"], "drafts") == row["folder"]
+
+    def open_draft(self, pk):
+        """Entwurf im Verfassen-Fenster weiterbearbeiten (Doppelklick oder „Bearbeiten“ im Lesebereich)."""
+        win = getattr(self, "_draft_windows", {}).get(pk)
+        if win is not None:
+            win.present()
+            return
+        m = db.message(pk)
+        if not m:
+            return
+        if m["partial"]:
+            self.toast(_("Loading the complete message …"))
+            self.load_full(pk, lambda: self.open_draft(pk))
+            return
+        kw = composer.build_draft(m, db.raw_message(pk) or b"")
+        kw["body"] = kw.pop("body_text")
+        w = ComposeWindow(self, account_id=kw.pop("account_id"), draft_pk=pk, **kw)
+        self.__dict__.setdefault("_draft_windows", {})[pk] = w
+        w.connect("destroy", lambda *_a: self._draft_windows.pop(pk, None))
+        w.present()
+
+    def discard_draft(self, pk):
+        """Alten Entwurf entfernen (nach dem Senden bzw. Neuspeichern): sofort ausgeblendet, auf dem Server endgültig gelöscht."""
+        m = db.message(pk)
+        if not m:
+            return
+        if m["archived"] or DEMO:
+            db.delete_message(pk)
+        else:
+            db.queue_op("purge", pk)
+            self.sync.request_ops()
+        self.reload_list()
+        self._rebuild_drawer_soon()
+
+    def _on_activate(self, _lv, pos):
+        """Doppelklick/Enter in der Liste: Entwürfe zum Bearbeiten öffnen."""
+        it = self.store.get_item(pos)
+        if it is not None and db.message(it.pk) and self.is_draft(db.message(it.pk)):
+            self.open_draft(it.pk)
 
     def mark_answered(self, pk):
         """Nach dem Antworten: Nachricht als beantwortet kennzeichnen (lokal sofort, auf dem Server vorgemerkt)."""

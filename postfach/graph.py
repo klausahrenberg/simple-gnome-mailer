@@ -212,6 +212,12 @@ def delete(pks):
             _request(acc, "DELETE", f"/me/messages/{m['remote_id']}")
 
 
+def purge(pks):
+    """Endgültig löschen (nicht nach „Gelöschte Elemente“ verschieben)."""
+    for acc, m in _remote_ids(pks):
+        _request(acc, "POST", f"/me/messages/{m['remote_id']}/permanentDelete")
+
+
 def archive(pks):
     for acc, m in _remote_ids(pks):
         if db.folder_by_role(acc["id"], "archive") not in (None, m["folder"]):

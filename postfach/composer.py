@@ -108,6 +108,23 @@ def build_reply(row, raw, reply_all=False):
     return out
 
 
+def build_draft(row, raw):
+    """Gespeicherten Entwurf zum Weiterbearbeiten -> Argumente für das Verfassen-Fenster (Format des Entwurfs bleibt)."""
+    h = mailparse.headers(raw or b"")
+    out = {"account_id": row["account_id"], "to": h.get("To") or "", "cc": h.get("Cc") or "", "bcc": h.get("Bcc") or "",
+           "subject": row["subject"] or "", "in_reply_to": h.get("In-Reply-To") or None,
+           "references": h.get("References") or None, "body_html": None,
+           "attachments": mailparse.forwardable_attachments(raw) if raw else []}
+    if row["body_html"]:
+        inner = original_html(row, raw)
+        m = re.search(r"<body[^>]*>(.*)</body>", inner, re.S | re.I)      # Hülle des gespeicherten Entwurfs entfernen
+        out["body_html"] = m.group(1) if m else inner
+        out["body_text"] = ""
+    else:
+        out["body_text"] = row["body_text"] or ""
+    return out
+
+
 def build_forward(row, raw):
     """-> dict(account_id, subject, body_text, body_html|None, attachments)"""
     h = mailparse.headers(raw or b"")

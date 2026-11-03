@@ -9,14 +9,14 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("WebKit", "6.0")
-from gi.repository import Adw, Gio, GLib, Gtk, Pango, WebKit
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango, WebKit
 
 from .. import config, contacts, db, logos, mailparse
 from . import openfile
 from .invitecard import InviteCard
 from .recipients import BubbleStrip, parse_addresses
 from .. import invite
-from ..i18n import _
+from ..i18n import _, ngettext
 from ..mailparse import display_subject
 
 
@@ -70,6 +70,10 @@ class Reader(Gtk.Box):
         who.append(right)
         head.append(who)
         self.append(head)
+
+        self.draft_bar = Adw.Banner(title=_("This message is a draft"), button_label=_("Edit"), revealed=False)
+        self.draft_bar.connect("button-clicked", lambda *_a: self.win.open_draft(self.pk))
+        self.append(self.draft_bar)
 
         self.invite_card = InviteCard(window)
         self.append(self.invite_card)
@@ -127,6 +131,7 @@ class Reader(Gtk.Box):
         self.to.set_addresses(others + [p for p in pairs if p[1].lower() in own], empty_text=_("hidden recipients (BCC)"))
         self.date.set_text(time.strftime(_("%Y-%m-%d %H:%M"), time.localtime(row["date"] or 0)))
         self._attachments()
+        self.draft_bar.set_revealed(self.win.is_draft(row))
         inv = None
         if row["has_cal"] and self.raw:
             try:
@@ -177,21 +182,82 @@ class Reader(Gtk.Box):
                                    max_width_chars=36))
             op.set_child(inner)
             op.connect("clicked", self._open_attachment, idx, fname)
-            self._context_menu(op, idx, fname)
+            self._context_menu(op, idx, fname, len(items) > 1)
+            src = Gtk.DragSource(actions=Gdk.DragAction.COPY)      # in eine neue Mail oder den Dateiordner ziehen
+            src.connect("prepare", self._drag_prepare, idx, fname)
+            src.connect("drag-begin", lambda s, d, w=box: s.set_icon(Gtk.WidgetPaintable.new(w), 12, 12))
+            box.add_controller(src)
             sv = Gtk.Button(icon_name="document-save-symbolic", tooltip_text=_("Save as …"))
             sv.connect("clicked", self._save_attachment, idx, fname)
             box.append(op)
             box.append(sv)
             self.atts.append(box)
+        if len(items) > 1:
+            allb = Gtk.Button(valign=Gtk.Align.CENTER, tooltip_text=_("Save all attachments …"))
+            allb.add_css_class("flat")
+            inner = Gtk.Box(spacing=6)
+            inner.append(Gtk.Image.new_from_icon_name("folder-download-symbolic"))
+            inner.append(Gtk.Label(label=_("Save all attachments …")))
+            allb.set_child(inner)
+            allb.connect("clicked", lambda *_a: self._save_all())
+            self.atts.append(allb)
         self.atts.set_visible(bool(items))
 
-    def _context_menu(self, button, idx, fname):
-        """Rechtsklick: „Öffnen mit …“ und „Speichern unter …“."""
+    def _drag_prepare(self, source, _x, _y, idx, fname):
+        """Anhang als Datei zum Ziehen bereitstellen (Dateiordner oder Verfassen-Fenster)."""
+        if self.row and self.row["partial"]:
+            self.win.toast(_("Loading “{name}” completely …").format(name=fname))
+            self.win.load_full(self.pk)             # danach erneut ziehen
+            return None
+        data = mailparse.attachment_bytes(self.raw, idx)
+        _safe, path = openfile.write_cache(fname, data, self.pk)
+        files = Gdk.FileList.new_from_array([Gio.File.new_for_path(path)])
+        return Gdk.ContentProvider.new_for_value(files)
+
+    def write_all(self, folder):
+        """Schreibt alle Anhänge in `folder`; vorhandene Dateien werden nicht überschrieben („name (1).pdf“). -> Anzahl"""
+        n = 0
+        for idx, fname, _t, _sz in mailparse.attachments(self.raw):
+            base = re.sub(r"[\\/]", "_", fname).strip() or "anhang"
+            stem, dot, ext = base.rpartition(".") if "." in base else (base, "", "")
+            path, k = os.path.join(folder, base), 1
+            while os.path.exists(path):
+                path = os.path.join(folder, f"{stem} ({k}){dot}{ext}")
+                k += 1
+            with open(path, "wb") as f:
+                f.write(mailparse.attachment_bytes(self.raw, idx))
+            n += 1
+        return n
+
+    def _save_all(self):
+        """Alle Anhänge der Nachricht in einen gewählten Ordner speichern (vorhandene Dateien bleiben erhalten)."""
+        if self.row and self.row["partial"]:
+            pk = self.pk
+            self.win.toast(_("Loading the complete message …"))
+            self.win.load_full(pk, lambda: self.pk == pk and self._save_all())
+            return
+        dlg = Gtk.FileDialog(title=_("Save all attachments"))
+
+        def done(d, res):
+            try:
+                folder = d.select_folder_finish(res).get_path()
+            except GLib.Error:
+                return
+            n = self.write_all(folder)
+            self.win.toast(ngettext("{n} attachment saved", "{n} attachments saved", n).format(n=n))
+
+        dlg.select_folder(self.win, None, done)
+
+    def _context_menu(self, button, idx, fname, several=False):
+        """Rechtsklick: „Öffnen mit …“, „Speichern unter …“ und bei mehreren Anhängen „Alle Anhänge speichern“."""
         pop = Gtk.Popover()
         pop.set_parent(button)
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        for label, cb in ((_("Open with …"), lambda *_: self._open_attachment(None, idx, fname, ask=True)),
-                          (_("Save as …"), lambda *_: self._save_attachment(None, idx, fname))):
+        entries = [(_("Open with …"), lambda *_: self._open_attachment(None, idx, fname, ask=True)),
+                   (_("Save as …"), lambda *_: self._save_attachment(None, idx, fname))]
+        if several:
+            entries.append((_("Save all attachments …"), lambda *_: self._save_all()))
+        for label, cb in entries:
             b = Gtk.Button(label=label)
             b.add_css_class("flat")
             b.connect("clicked", lambda _b, cb=cb: (pop.popdown(), cb()))

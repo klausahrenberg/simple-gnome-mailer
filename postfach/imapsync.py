@@ -388,6 +388,15 @@ def remote_delete(pks):
         _with_msgs(i, _move_or_delete("trash"))
 
 
+def remote_purge(pks):
+    """Endgültig löschen, ohne Papierkorb (z. B. ein Entwurf, der gesendet oder neu gespeichert wurde)."""
+    g, i = _split(pks)
+    if g:
+        graph.purge(g)
+    if i:
+        _with_msgs(i, _move_or_delete(None))
+
+
 def remote_mark_spam(pks):
     """Verschiebt in den Spam-Ordner des jeweiligen Kontos."""
     g, i = _split(pks)

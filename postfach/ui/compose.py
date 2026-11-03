@@ -39,10 +39,11 @@ class ComposeWindow(Adw.Window):
     """Verfassen: formatiert (HTML, Standard) oder Nur-Text; Anhänge per Knopf, Ziehen und Einfügen (Strg+V)."""
 
     def __init__(self, parent, account_id=None, to="", cc="", bcc="", subject="", body="", body_html=None,
-                 in_reply_to=None, references=None, attachments=None, reply_pk=None):
+                 in_reply_to=None, references=None, attachments=None, reply_pk=None, draft_pk=None):
         super().__init__(transient_for=parent, default_width=760, default_height=700, title=_("New message"))
         self.parent_win = parent
         self.in_reply_to, self.references = in_reply_to, references
+        self.draft_pk = draft_pk                       # bearbeiteter Entwurf: wird nach Senden/Neuspeichern gelöscht
         self.reply_pk = reply_pk                       # Nachricht, auf die geantwortet wird (wird danach als beantwortet markiert)
         self.accs = list(db.mail_accounts())
         self.attachments = list(attachments or [])
@@ -524,6 +525,8 @@ class ComposeWindow(Adw.Window):
             self.parent_win.toast(_("Message sent"))
             if self.reply_pk:
                 self.parent_win.mark_answered(self.reply_pk)
+            if self.draft_pk:
+                self.parent_win.discard_draft(self.draft_pk)
             self.parent_win.sync.request()
             self._force = True
             GLib.idle_add(lambda: self.close() and False)
@@ -599,6 +602,8 @@ class ComposeWindow(Adw.Window):
             self.toasts.add_toast(Adw.Toast(title=_("Draft not saved: {error}").format(error=err), timeout=8))
         else:
             self.parent_win.toast(_("Draft saved"))
+            if self.draft_pk:
+                self.parent_win.discard_draft(self.draft_pk)     # der alte Stand wird durch den neuen ersetzt
             acc = self.accs[self.from_row.get_selected()]
             folder = db.folder_by_role(acc["id"], "drafts")
             if folder:
