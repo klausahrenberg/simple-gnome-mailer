@@ -1,5 +1,6 @@
 """Zeile der Nachrichtenliste."""
 import time
+import weakref
 from email.utils import getaddresses
 
 import gi
@@ -89,7 +90,16 @@ class MessageRow(Gtk.Box):
         self.star.add_css_class("circular")
         self.star.add_css_class("warning")
         self.star.add_css_class("row-star")
-        self.star.connect("clicked", lambda *_: self._item and self._item.on_star and self._item.on_star(self._item))
+        # Signalfunktionen halten die Zeile nur schwach: eine starke Referenz (Zeile -> Stern -> Funktion -> Zeile) läuft über
+        # C-Objekte und kann nicht freigegeben werden – bei jedem Neuaufbau der Liste blieben so ~400 Zeilen im Speicher
+        me = weakref.ref(self)
+
+        def star_clicked(*_a):
+            row = me()
+            if row and row._item and row._item.on_star:
+                row._item.on_star(row._item)
+
+        self.star.connect("clicked", star_clicked)
         self._item, self._hid = None, None
         self.date = _label(["caption", "dim-label", "numeric"], ellipsize=False, xalign=1.0)
         for w in (self.sender, self.replied, self.cal, self.clip, self.star, self.date):
@@ -113,7 +123,8 @@ class MessageRow(Gtk.Box):
     def bind(self, item):
         self.unbind()
         self._item = item
-        self._hid = item.connect("changed", lambda *_: self._refresh(item))
+        me = weakref.ref(self)
+        self._hid = item.connect("changed", lambda *_a: (row := me()) and row._refresh(item))
         self._refresh(item)
 
     def unbind(self):

@@ -126,6 +126,39 @@ def _crash_log():
         return None
 
 
+def _watchdog(log):
+    """Hängt die Oberfläche länger als 8 s (z. B. wegen Speichermangel oder einer blockierten Datenbank), werden die Stapel
+    aller Threads in crash.log geschrieben – so lässt sich die Ursache später finden."""
+    import faulthandler
+    import threading
+    import time
+    beat = [time.monotonic()]
+
+    def tick():
+        beat[0] = time.monotonic()
+        return True
+
+    def watch():
+        reported = 0.0
+        while True:
+            time.sleep(2)
+            stalled = time.monotonic() - beat[0]
+            if stalled > 8 and beat[0] != reported:
+                reported = beat[0]
+                try:
+                    log.write(f"\n--- {time.strftime('%Y-%m-%d %H:%M:%S')} Oberfläche reagiert seit {stalled:.0f} s nicht ---\n")
+                    log.flush()
+                    faulthandler.dump_traceback(file=log, all_threads=True)
+                    log.flush()
+                except (OSError, ValueError):
+                    return
+
+    GLib.timeout_add(1000, tick)
+    threading.Thread(target=watch, daemon=True, name="watchdog").start()
+
+
 def main():
     _log = _crash_log()    # Datei offen halten, solange die App läuft
+    if _log:
+        GLib.idle_add(lambda: (_watchdog(_log), False)[1])
     return App().run(sys.argv)
