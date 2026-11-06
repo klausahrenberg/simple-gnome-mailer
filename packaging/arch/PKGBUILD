@@ -2,7 +2,7 @@
 # Nur für lokale Tests aus dem Projektordner (die Veröffentlichung im AUR: packaging/aur/PKGBUILD).
 # Lokales Paket aus dem Projektordner:  cd packaging/arch && makepkg -f   (installieren: sudo pacman -U postfach-*.pkg.tar.zst)
 pkgname=postfach
-pkgver=0.2.0
+pkgver=0.2.1
 pkgrel=1
 pkgdesc='Schlanker IMAP-Mail-Client für GNOME (GTK4/libadwaita)'
 arch=(any)
