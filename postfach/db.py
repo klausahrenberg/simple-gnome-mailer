@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS raw(
 CREATE TABLE IF NOT EXISTS pending_ops(      -- Serveraktionen, die noch auf Verbindung warten (Offline-Betrieb)
   id INTEGER PRIMARY KEY,
   kind TEXT NOT NULL,                -- flag | delete | spam | notspam | archive
-  pk INTEGER NOT NULL, arg TEXT, tries INTEGER DEFAULT 0, created INTEGER
+  pk INTEGER NOT NULL, arg TEXT, tries INTEGER DEFAULT 0, created INTEGER, not_before INTEGER DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS invite_responses(
   message_pk INTEGER PRIMARY KEY REFERENCES messages(id) ON DELETE CASCADE,
@@ -132,6 +132,8 @@ def conn():
             c.execute('ALTER TABLE messages ADD COLUMN remote_id TEXT')
         if 'title' not in {r[1] for r in c.execute('PRAGMA table_info(folders)')}:
             c.execute('ALTER TABLE folders ADD COLUMN title TEXT')
+        if 'not_before' not in {r[1] for r in c.execute('PRAGMA table_info(pending_ops)')}:
+            c.execute('ALTER TABLE pending_ops ADD COLUMN not_before INTEGER DEFAULT 0')
         if 'answered' not in mcols:      # 1 = beantwortet (IMAP \\Answered bzw. lokal nach dem Antworten)
             c.execute('ALTER TABLE messages ADD COLUMN answered INTEGER DEFAULT 0')
         if 'hidden' not in mcols:        # 1 = lokal bereits gelöscht/verschoben, Serveraktion steht noch aus
@@ -302,7 +304,10 @@ def _flag_pending():
     return {r[0] for r in conn().execute("SELECT pk FROM pending_ops WHERE kind='flag'")}
 
 
-def queue_op(kind, pk, arg=None):
+UNDO_DELAY = 12      # Sekunden, die eine Löschaktion wartet (die Oberfläche bietet 10 s „Rückgängig“ an)
+
+
+def queue_op(kind, pk, arg=None, delay=None):
     """Merkt eine Serveraktion vor. Entfernende Aktionen (löschen, Spam, Archiv) blenden die Nachricht sofort aus;
     sie wird erst nach der Bestätigung durch den Server endgültig gelöscht."""
     c = conn()
@@ -311,12 +316,38 @@ def queue_op(kind, pk, arg=None):
     else:
         c.execute("DELETE FROM pending_ops WHERE pk=?", (pk,))
         c.execute("UPDATE messages SET hidden=1 WHERE id=?", (pk,))
-    c.execute("INSERT INTO pending_ops(kind, pk, arg, created) VALUES (?,?,?,?)", (kind, pk, arg, int(time.time())))
+    if delay is None:
+        delay = UNDO_DELAY if kind == "delete" else 0
+    now = int(time.time())
+    c.execute("INSERT INTO pending_ops(kind, pk, arg, created, not_before) VALUES (?,?,?,?,?)", (kind, pk, arg, now, now + delay))
     c.commit()
 
 
-def pending_ops():
+def pending_ops(ready=False):
+    """Ausstehende Aktionen; ready=True: nur die, deren Wartezeit (Rückgängig-Fenster) abgelaufen ist."""
+    if ready:
+        return conn().execute("SELECT * FROM pending_ops WHERE not_before<=? ORDER BY id", (int(time.time()),)).fetchall()
     return conn().execute("SELECT * FROM pending_ops ORDER BY id").fetchall()
+
+
+def next_op_delay():
+    """Sekunden bis zur nächsten noch wartenden Aktion (None, wenn keine wartet)."""
+    r = conn().execute("SELECT MIN(not_before) FROM pending_ops WHERE not_before>?", (int(time.time()),)).fetchone()[0]
+    return None if r is None else max(0, r - int(time.time()))
+
+
+def cancel_removals(pks):
+    """„Rückgängig“: noch nicht ausgeführte Lösch-/Verschiebe-Aktionen verwerfen und die Nachrichten wieder einblenden.
+    -> Liste der wiederhergestellten pks"""
+    c = conn()
+    done = []
+    for pk in pks:
+        r = c.execute("DELETE FROM pending_ops WHERE pk=? AND kind IN ('delete','spam','notspam','archive','purge')", (pk,))
+        if r.rowcount:
+            c.execute("UPDATE messages SET hidden=0 WHERE id=?", (pk,))
+            done.append(pk)
+    c.commit()
+    return done
 
 
 def pending_count():

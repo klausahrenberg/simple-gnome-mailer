@@ -57,6 +57,12 @@ class App(Adw.Application):
         a = Gio.SimpleAction.new("open-message", GLib.VariantType.new("i"))
         a.connect("activate", lambda _a, v: self._win().show_message_pk(v.get_int32()))
         self.add_action(a)
+        for name, typ, cb in (("mark-read-message", "i", lambda _a, v: self._win().notify_mark_read(v.get_int32())),
+                              ("mark-read-many", "ai", lambda _a, v: self._win().notify_mark_read(list(v.unpack()))),
+                              ("delete-message", "i", lambda _a, v: self._win().notify_delete(v.get_int32()))):
+            act = Gio.SimpleAction.new(name, GLib.VariantType.new(typ))   # Schaltflächen der Benachrichtigungen
+            act.connect("activate", cb)
+            self.add_action(act)
         for name, cb, accel in (("show", lambda *_: self._win().present(), None),
                                 ("compose", lambda *_: self._compose(), None),
                                 ("quit-app", lambda *_: self.quit_app(), "<Control>q")):

@@ -666,7 +666,7 @@ class SyncManager:
     def _process_ops(self):
         """-> True, wenn online weitergearbeitet werden kann."""
         from . import ops
-        if not db.pending_count():
+        if not db.pending_ops(ready=True):
             return True
         offline, error = ops.process()
         if offline:
@@ -711,6 +711,9 @@ class SyncManager:
         while not self._stop:
             if not first:
                 wait = min(30 * 2 ** self._offline_tries, 300) if not self.online else max(1, int(config.get("sync_interval_min"))) * 60
+                due = db.next_op_delay()                   # wartende Löschaktionen (Rückgängig-Fenster) rechtzeitig ausführen
+                if due is not None:
+                    wait = min(wait, due + 1)
                 self._wake.wait(wait)
             first = False
             self._wake.clear()

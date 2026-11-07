@@ -59,8 +59,6 @@
  "Default format": "Standardformat",
  "Delete": "Löschen",
  "Delete (Del)": "Löschen (Entf)",
- "Delete message?": "Nachricht löschen?",
- "Delete {n} messages?": "{n} Nachrichten löschen?",
  "Direct Google/Microsoft sign-in is no longer supported – please add the account via GNOME Online Accounts": "Direkte Google-/Microsoft-Anmeldung wird nicht mehr unterstützt – bitte das Konto über die GNOME-Online-Konten hinzufügen",
  "Discard": "Verwerfen",
  "Draft not saved: {error}": "Entwurf nicht gespeichert: {error}",
@@ -243,11 +241,6 @@
  "The attachments total {size} (limit {limit} MB). Many mail servers reject large messages.": "Die Anhänge sind zusammen {size} groß (Grenze {limit} MB). Viele Mailserver lehnen große Nachrichten ab.",
  "The message could not be loaded completely: {error}": "Nachricht konnte nicht vollständig geladen werden: {error}",
  "The message is sent to {name} together with your response.": "Die Nachricht geht zusammen mit deiner Antwort an {name}.",
- "The message will be deleted permanently and cannot be restored.": "Die Nachricht wird endgültig gelöscht und lässt sich nicht wiederherstellen.",
- "The message will be moved to the trash.": "Die Nachricht wird in den Papierkorb verschoben.",
- "The messages will be deleted permanently and cannot be restored.": "Die Nachrichten werden endgültig gelöscht und lassen sich nicht wiederherstellen.",
- "The messages will be deleted – {k} of them permanently, the rest will go to the trash.": "Die Nachrichten werden gelöscht – {k} davon endgültig, der Rest kommt in den Papierkorb.",
- "The messages will be moved to the trash.": "Die Nachrichten werden in den Papierkorb verschoben.",
  "The newest N messages are stored locally and searched": "Die neuesten N Nachrichten werden lokal gespeichert und durchsucht",
  "The originals on your computer stay unchanged.": "Die Originale bleiben auf deinem Rechner unverändert.",
  "The saved password is missing or has changed. It is stored securely in the GNOME keyring.": "Das gespeicherte Passwort fehlt oder wurde geändert. Es wird sicher im GNOME-Schlüsselbund abgelegt.",
@@ -378,5 +371,8 @@
  "{n} attachment saved": "{n} Anhang gespeichert",
  "{n} attachments saved": "{n} Anhänge gespeichert",
  "This message is a draft": "Diese Nachricht ist ein Entwurf",
- "Edit": "Bearbeiten"
+ "Edit": "Bearbeiten",
+ "Mark all as read": "Alle als gelesen markieren",
+ "Undo": "Rückgängig",
+ "The message could not be restored": "Die Nachricht konnte nicht wiederhergestellt werden"
 }

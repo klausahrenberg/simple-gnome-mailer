@@ -38,6 +38,7 @@ class MainWindow(Adw.ApplicationWindow):
         super().__init__(application=app, default_width=int(w), default_height=int(h), title=APP_NAME)
         self.view = dict(config.get("last_view") or {"kind": "unified"})
         self.search_text = ""
+        self._undo_active = []                  # [{item, index, view, search}] – gelöschte Nachrichten, die sich noch zurückholen lassen
         self.offset = 0
         self.store = Gio.ListStore.new(MessageItem)
         self._search_id = 0
@@ -126,13 +127,61 @@ class MainWindow(Adw.ApplicationWindow):
             n = Gio.Notification.new(m["from_name"] or m["from_addr"] or _("New message"))
             n.set_body(display_subject(m["subject"]))
             n.set_default_action_and_target("app.open-message", GLib.Variant("i", m["pk"]))
+            n.add_button_with_target(_("Mark as read"), "app.mark-read-message", GLib.Variant("i", m["pk"]))
+            n.add_button_with_target(_("Delete"), "app.delete-message", GLib.Variant("i", m["pk"]))
             app.send_notification(f"msg-{m['pk']}", n)
         else:
             n = Gio.Notification.new(ngettext("{n} new message", "{n} new messages", len(msgs)).format(n=len(msgs)))
             n.set_body("\n".join(f"{m['from_name'] or m['from_addr']}: {display_subject(m['subject'])}" for m in msgs[:4]))
             n.set_default_action("app.show")
+            n.add_button_with_target(_("Mark all as read"), "app.mark-read-many", GLib.Variant("ai", [m["pk"] for m in msgs]))
             app.send_notification("new-mail", n)
         return False
+
+    def _drop_from_list(self, pk):
+        """Nachricht aus der angezeigten Liste nehmen (ohne die übrige Auswahl zu stören)."""
+        self._suppress = True
+        try:
+            for i in range(self.store.get_n_items()):
+                if self.store.get_item(i).pk == pk:
+                    self.store.remove(i)
+                    break
+        finally:
+            self._suppress = False
+        self._update_empty()
+
+    def notify_mark_read(self, pks):
+        """Schaltfläche „Als gelesen markieren“ der Benachrichtigung (lokal sofort, Server vorgemerkt)."""
+        app = self.get_application()
+        for pk in ([pks] if isinstance(pks, int) else pks):
+            m = db.message(pk)
+            if not m:
+                continue
+            db.set_flags(pk, seen=True)
+            if not m["archived"] and not DEMO:
+                db.queue_op("flag", pk, "\\Seen:1")
+            for i in range(self.store.get_n_items()):
+                it = self.store.get_item(i)
+                if it.pk == pk:
+                    it.d["seen"] = 1
+                    self._refresh_item(it)
+            app.withdraw_notification(f"msg-{pk}")
+        app.withdraw_notification("new-mail")
+        self.sync.request_ops()
+        self._rebuild_drawer_soon()
+
+    def notify_delete(self, pk):
+        """Schaltfläche „Löschen“ der Benachrichtigung: in den Papierkorb (bzw. endgültig, wenn es keinen gibt)."""
+        m = db.message(pk)
+        if m:
+            if m["archived"] or DEMO:
+                db.delete_message(pk)
+            else:
+                db.queue_op("delete", pk)
+                self.sync.request_ops()
+            self._drop_from_list(pk)
+            self._rebuild_drawer_soon()
+        self.get_application().withdraw_notification(f"msg-{pk}")
 
     def show_message_pk(self, pk):
         """Wählt eine Nachricht (z. B. aus einer Benachrichtigung) aus und zeigt sie an."""
@@ -556,6 +605,59 @@ class MainWindow(Adw.ApplicationWindow):
         self.offset = 0
         self.store.remove_all()
         self._load_more()
+        for e in self._undo_active:             # laufende „Rückgängig“-Platzhalter bleiben beim Neuaufbau erhalten
+            if e["view"] == self.view and e["search"] == self.search_text:
+                self.store.insert(min(e["index"], self.store.get_n_items()), e["item"])
+
+    def refresh_list(self):
+        """Liste an die Datenbank angleichen, ohne sie neu aufzubauen: entfernt Verschwundenes, fügt Neues ein und
+        aktualisiert Geändertes. Auswahl, Scrollposition und laufende Animationen bleiben – kein Flackern."""
+        real = [self.store.get_item(i) for i in range(self.store.get_n_items()) if not self.store.get_item(i).placeholder]
+        limit = max(PAGE, len(real))
+        rows = db.query(self.view, self.search_text, limit, 0, config.get("sort"))
+        old_pks = [it.pk for it in real]
+        new_pks = {r["id"] for r in rows}
+        old_set = set(old_pks)
+        if [pk for pk in old_pks if pk in new_pks] != [r["id"] for r in rows if r["id"] in old_set]:
+            self.reload_list()                  # Reihenfolge hat sich geändert (z. B. Datum): sauber neu aufbauen
+            return
+        multi = self.view.get("kind") != "folder" and len(self._labels) > 1
+        keep = {it.pk for it in self._selected_items()}
+        self._suppress = True
+        try:
+            i = 0
+            for r in rows:
+                while True:
+                    n = self.store.get_n_items()
+                    while i < n and self.store.get_item(i).placeholder:
+                        i += 1
+                    if i < n:
+                        cur = self.store.get_item(i)
+                        if cur.pk == r["id"]:
+                            d = dict(r)
+                            if d != cur.d:
+                                cur.d = d
+                                cur.emit("changed")
+                            i += 1
+                            break
+                        if cur.pk not in new_pks:
+                            self.store.remove(i)       # verschwundene Nachricht
+                            continue
+                    self.store.insert(i, self._new_item(r, multi))
+                    i += 1
+                    break
+            while i < self.store.get_n_items():
+                if self.store.get_item(i).placeholder:
+                    i += 1
+                else:
+                    self.store.remove(i)
+        finally:
+            self._suppress = False
+        self.offset = sum(1 for k in range(self.store.get_n_items()) if not self.store.get_item(k).placeholder)
+        self._more = len(rows) == limit
+        if keep - {it.pk for it in self._selected_items()}:
+            self._on_selected()                 # die ausgewählte Nachricht ist verschwunden
+        self._update_empty()
 
     def _new_item(self, r, multi):
         it = MessageItem(r, self._labels.get(r["account_id"], "") if multi else "", self._colors.get(r["account_id"]))
@@ -564,6 +666,7 @@ class MainWindow(Adw.ApplicationWindow):
             self.view.get("kind") == "folder" and r["folder"] in (db.folder_by_role(r["account_id"], "sent"),
                                                                     db.folder_by_role(r["account_id"], "drafts")))
         it.on_star = self._star_item
+        it.on_delete = self._delete_item
         return it
 
     def _load_more(self):
@@ -616,7 +719,8 @@ class MainWindow(Adw.ApplicationWindow):
     # --------------------------------------------------------- Auswahl/Lesen
     def _selected_positions(self):
         bits = self.sel.get_selection()
-        return [bits.get_nth(i) for i in range(bits.get_size())]
+        pos = [bits.get_nth(i) for i in range(bits.get_size())]
+        return [i for i in pos if not self.store.get_item(i).placeholder]       # „Rückgängig“-Zeilen nie als Nachricht behandeln
 
     def _selected_items(self):
         return [self.store.get_item(i) for i in self._selected_positions()]
@@ -766,7 +870,7 @@ class MainWindow(Adw.ApplicationWindow):
         else:
             db.queue_op("purge", pk)
             self.sync.request_ops()
-        self.reload_list()
+        self.refresh_list()
         self._rebuild_drawer_soon()
 
     def _on_activate(self, _lv, pos):
@@ -841,58 +945,119 @@ class MainWindow(Adw.ApplicationWindow):
         if items := self._selected_items():
             self._set_flag(items, "seen", True)
 
-    def _remove_selected(self, kind, msg_fn):
+    def _delete_item(self, it):
+        """Papierkorb-Knopf in der Zeile (beim Überfahren): nur diese Nachricht löschen, Auswahl bleibt unverändert."""
+        self._remove_selected("delete", items=[it])
+
+    def _remove_selected(self, kind, msg_fn=None, items=None):
         """Löschen/Spam/Archiv: die Nachrichten verschwinden sofort (auch offline); die Serveraktion `kind`
-        (delete | spam | notspam | archive) wird vorgemerkt und ausgeführt, sobald das Konto erreichbar ist."""
-        items = self._selected_items()
+        (delete | spam | notspam | archive) wird vorgemerkt und ausgeführt, sobald das Konto erreichbar ist.
+        Löschen ist ohne Rückfrage 10 s lang rückgängig zu machen (Platzhalter in der Liste)."""
+        explicit = items is not None                       # bestimmte Zeilen (Knopf beim Überfahren) statt der Auswahl
+        items = items if explicit else self._selected_items()
         if not items:
             return
+        positions = [self._undo_position(it) for it in items] if explicit else self._selected_positions()
+        order = sorted((p, it) for p, it in zip(positions, items) if p is not None)
+        if not order:
+            return
+        positions, items = [p for p, _it in order], [it for _p, it in order]
         pks = [it.pk for it in items]
-        positions = self._selected_positions()
-        first = positions[0]
+        selected = set(self._selected_positions())
+        touches_selection = not explicit or any(p in selected for p in positions)
+        first = min(positions)
+        undoable = kind == "delete" and not DEMO
         for it in items:
-            if it.d["archived"] or DEMO:       # nur lokal vorhanden: endgültig löschen
+            if DEMO or (it.d["archived"] and kind != "delete"):       # nur lokal vorhanden (Spam/Archiv): sofort löschen
                 db.delete_message(it.pk)
             else:
-                db.queue_op(kind, it.pk)       # blendet die Nachricht aus, bis der Server bestätigt hat
+                db.queue_op(kind, it.pk)       # blendet die Nachricht aus; Löschen wartet 12 s (Rückgängig)
         self._suppress = True
         try:
-            for pos in sorted(positions, reverse=True):
+            # beim Löschen bleibt die erste Zeile als Platzhalter stehen (sie wird in-place umgewandelt und fährt animiert ein);
+            # alle anderen betroffenen Zeilen verschwinden
+            for pos in sorted(positions[1:] if undoable else positions, reverse=True):
                 self.store.remove(pos)
         finally:
             self._suppress = False
-        n = self.store.get_n_items()
-        if n:
-            self._select_pos(min(first, n - 1))
+        if undoable:
+            self._add_undo(items[0], pks, first)
+            nxt = first + 1                    # der Platzhalter steht an der Stelle der gelöschten Nachricht
         else:
-            self.sel.unselect_all()
-            self._on_selected()
-            self._update_empty()
+            nxt = first
+        n = self.store.get_n_items()
+        if touches_selection:
+            if nxt < n and not self.store.get_item(nxt).placeholder:
+                self._select_pos(nxt)
+            else:
+                self.sel.unselect_all()
+                self._on_selected()
+        self._update_empty()
         self.sync.request_ops()
         self._rebuild_drawer_soon()
-        self.toast(msg_fn(len(pks)))
+        if not undoable and msg_fn:
+            self.toast(msg_fn(len(pks)))
+
+    def _add_undo(self, it, pks, index):
+        """Die Zeile der gelöschten Nachricht wird zum Platzhalter „Nachricht gelöscht – Rückgängig“ (10 Sekunden):
+        dieselbe Zeile, deshalb ändert sich die Liste nur animiert und ohne Neuaufbau."""
+        n = len(pks)
+        it.placeholder, it.collapsing, it.undo_pks, it.on_undo = True, False, list(pks), self._undo_delete
+        it.undo_text = ngettext("Message deleted", "{n} messages deleted", n).format(n=n)
+        it.emit("changed")
+        self._undo_active.append({"item": it, "index": index, "view": dict(self.view), "search": self.search_text})
+        GLib.timeout_add_seconds(10, self._expire_undo, it)
+
+    def _undo_position(self, it):
+        for i in range(self.store.get_n_items()):
+            if self.store.get_item(i) is it:
+                return i
+        return None
+
+    def _forget_undo(self, it):
+        self._undo_active = [e for e in self._undo_active if e["item"] is not it]
+
+    def _expire_undo(self, it):
+        """Nach 10 Sekunden: der Platzhalter fährt ein und wird dann entfernt (die Nachricht wird auf dem Server gelöscht)."""
+        if not it.placeholder:
+            return False
+        it.collapsing = True
+        it.emit("changed")
+        self._forget_undo(it)
+
+        def finish():
+            pos = self._undo_position(it)
+            if it.placeholder and it.collapsing and pos is not None:
+                self._suppress = True
+                try:
+                    self.store.remove(pos)
+                finally:
+                    self._suppress = False
+                self._update_empty()
+            return False
+
+        GLib.timeout_add(300, finish)
+        return False
+
+    def _undo_delete(self, it):
+        """Schaltfläche „Rückgängig“: Löschung zurücknehmen; die Zeile fährt wieder aus."""
+        restored = db.cancel_removals(it.undo_pks)
+        self._forget_undo(it)
+        if restored and len(it.undo_pks) == 1:
+            it.placeholder, it.collapsing = False, False
+            it.emit("changed")
+        elif restored:                         # mehrere Nachrichten: Liste an die Datenbank angleichen
+            it.collapsing = True
+            it.emit("changed")
+            GLib.timeout_add(260, lambda: (self.refresh_list(), False)[1])
+        else:
+            self.toast(_("The message could not be restored"))
+            self._expire_undo(it)
+        self._rebuild_drawer_soon()
 
     def _delete(self):
-        items = self._selected_items()
-        if not items:
-            return
-        n = len(items)
-        permanent = [it for it in items if db.folder_by_role(it.d["account_id"], "trash") in (None, it.d["folder"])]
-        if not permanent:
-            body = ngettext("The message will be moved to the trash.", "The messages will be moved to the trash.", n)
-        elif len(permanent) == n:
-            body = ngettext("The message will be deleted permanently and cannot be restored.",
-                            "The messages will be deleted permanently and cannot be restored.", n)
-        else:
-            body = _("The messages will be deleted – {k} of them permanently, the rest will go to the trash.").format(k=len(permanent))
-        d = Adw.AlertDialog(heading=ngettext("Delete message?", "Delete {n} messages?", n).format(n=n), body=body)
-        d.add_response("cancel", _("Cancel"))
-        d.add_response("delete", _("Delete"))
-        d.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
-        d.set_default_response("cancel")
-        d.set_close_response("cancel")
-        d.connect("response", lambda _d, r: r == "delete" and self._remove_selected("delete", lambda n: ngettext("Message deleted", "{n} messages deleted", n).format(n=n)))
-        d.present(self)
+        """Löschen ohne Rückfrage – 10 Sekunden lang per „Rückgängig“ zurückzuholen."""
+        self._remove_selected("delete")
 
     def _archive(self):
         items = [it for it in self._selected_items() if db.folder_by_role(it.d["account_id"], "archive")]
@@ -1014,13 +1179,5 @@ class MainWindow(Adw.ApplicationWindow):
             self._load_contacts()
         self._rebuild_drawer()
         if not self.search_text:
-            keep = {it.pk for it in self._selected_items()}
-            self._suppress = True      # Auswahl/Lesebereich bleiben beim Neuaufbau unverändert
-            try:
-                self.reload_list()
-                for i in range(self.store.get_n_items()):
-                    if self.store.get_item(i).pk in keep:
-                        self.sel.select_item(i, False)
-            finally:
-                self._suppress = False
+            self.refresh_list()          # schrittweise angleichen statt neu aufzubauen: kein Flackern
         return False

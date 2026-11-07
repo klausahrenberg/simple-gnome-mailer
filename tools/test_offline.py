@@ -24,7 +24,7 @@ inbox = lambda: [r["subject"] for r in db.query({"kind": "unified"})]
 assert len(inbox()) == 4 and db.unread_counts()[(acc, "INBOX")] == 4
 
 # Löschen: Nachricht verschwindet sofort aus Liste und Zählern
-db.queue_op("delete", pks[0])
+db.queue_op("delete", pks[0], delay=0)
 assert "S1" not in inbox() and len(inbox()) == 3 and db.unread_counts()[(acc, "INBOX")] == 3
 assert db.message(pks[0]) is not None and db.pending_count() == 1
 
@@ -53,13 +53,21 @@ assert db.pending_count() == 2 and db.is_recent(pks[1], seconds=0)
 CALLS.clear()
 ops.process()
 assert ("flag", [pks[1]], "\\Seen", False) in CALLS and ("flag", [pks[1]], "\\Flagged", True) in CALLS and db.pending_count() == 0
+# Rückgängig: Löschen wartet, bis das Fenster abgelaufen ist; vorher lässt es sich zurücknehmen
+db.queue_op("delete", pks[1])
+assert db.message(pks[1])["hidden"] == 1 and not db.pending_ops(ready=True) and 0 < db.next_op_delay() <= db.UNDO_DELAY
+CALLS.clear()
+ops.process()
+assert CALLS == [] and db.pending_count() == 1                       # noch nicht fällig: nichts geschieht
+assert db.cancel_removals([pks[1]]) == [pks[1]] and db.message(pks[1])["hidden"] == 0 and db.pending_count() == 0
+assert "S2" in inbox()
 # Spam
 db.queue_op("spam", pks[2])
 ops.process()
 assert db.message(pks[2]) is None and ("spam", [pks[2]]) in CALLS
 # dauerhafter Serverfehler: nach 3 Versuchen wieder anzeigen
 FAIL.append(RuntimeError("Mailbox locked"))
-db.queue_op("delete", pks[3])
+db.queue_op("delete", pks[3], delay=0)
 assert "S4" not in inbox()
 for _ in range(3):
     off, err = ops.process()
@@ -88,7 +96,7 @@ for _ in range(3):                               # weitere Versuche: keine weite
     mgr.request()
     time.sleep(0.3)
 assert statuses.count("offline") == 1 and not [d for d in dones if d[2]], (statuses, dones)
-db.queue_op("delete", db.insert_message(dict(mailparse.parse(b"From: z@x.de\r\nSubject: Z\r\nMessage-ID: <z@t>\r\n\r\nx"), account_id=acc, folder="INBOX", uid=99, seen=0, flagged=0), b"x"))
+db.queue_op("delete", delay=0, pk=db.insert_message(dict(mailparse.parse(b"From: z@x.de\r\nSubject: Z\r\nMessage-ID: <z@t>\r\n\r\nx"), account_id=acc, folder="INBOX", uid=99, seen=0, flagged=0), b"x"))
 mgr.request_ops()
 time.sleep(0.3)
 assert db.pending_count() == 1

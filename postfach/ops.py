@@ -36,7 +36,7 @@ def process():
     """Führt alle ausstehenden Aktionen aus. -> (offline, Fehlertext oder None).
     offline=True: Verbindung fehlgeschlagen, die übrigen Aktionen bleiben in der Warteschlange."""
     groups, error = {}, None
-    for op in db.pending_ops():
+    for op in db.pending_ops(ready=True):
         m = db.message(op["pk"])
         if not m:                                  # Nachricht gibt es nicht mehr (z. B. vom Server gelöscht)
             db.drop_ops([op["id"]])
