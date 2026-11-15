@@ -5,6 +5,7 @@
 #   ./install.sh --check      nur prüfen, nichts ändern
 #   ./install.sh --no-deps    Paketprüfung überspringen
 #   ./install.sh --uninstall  Starter, Symbole und Befehl wieder entfernen (Daten und Einstellungen bleiben)
+#   ./install.sh --force      auch installieren, wenn Postfach schon als Paket (pacman) installiert ist
 # Der Ordner muss danach an seinem Platz bleiben: Starter und Befehl zeigen auf run.sh in diesem Ordner.
 set -e
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -13,13 +14,15 @@ apps="$data/applications"
 icons="$data/icons/hicolor/scalable/apps"
 bindir="$HOME/.local/bin"
 
-mode=install; yes=0; deps=1
+SYSTEM_BIN="${POSTFACH_SYSTEM_BIN:-/usr/bin/postfach}"      # vom Paket (pacman) installierter Befehl
+mode=install; yes=0; deps=1; force=0
 for a in "$@"; do
   case "$a" in
     --uninstall) mode=uninstall ;;
     --check) mode=check ;;
     --yes|-y) yes=1 ;;
     --no-deps) deps=0 ;;
+    --force) force=1 ;;
     -h|--help) sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unbekannte Option: $a" >&2; exit 2 ;;
   esac
@@ -30,6 +33,14 @@ if [ "$mode" = uninstall ]; then
   gtk-update-icon-cache -q -t "$data/icons/hicolor" 2>/dev/null || true
   update-desktop-database -q "$apps" 2>/dev/null || true
   echo "Postfach wurde entfernt (Nachrichten und Einstellungen bleiben erhalten)."
+  exit 0
+fi
+
+# Ist Postfach schon als Systempaket installiert, würde ein Starter in ~/.local/bin den Paket-Befehl überdecken – und nach
+# dem Löschen dieses Ordners ins Leere zeigen. Dann nichts doppelt einrichten.
+if [ -x "$SYSTEM_BIN" ] && [ "$force" = 0 ]; then
+  echo "Postfach ist bereits als Paket installiert ($SYSTEM_BIN) – dieses Skript wird nicht gebraucht."
+  echo "Mit »--force« trotzdem einrichten, mit »--uninstall« alte Starter aus früheren Installationen entfernen."
   exit 0
 fi
 
@@ -148,7 +159,8 @@ mkdir -p "$apps" "$icons" "$bindir"
 cp "$here"/postfach/icons/hicolor/scalable/apps/*.svg "$icons/"
 chmod +x "$here/run.sh"
 sed "s|^Exec=.*|Exec=\"$here/run.sh\"|" "$here/data/eu.ahrenberg.mail.desktop" > "$apps/eu.ahrenberg.mail.desktop"
-printf '#!/bin/sh\nexec "%s/run.sh" "$@"\n' "$here" > "$bindir/postfach"
+# der Befehl fällt auf das Systempaket zurück, falls dieser Ordner später gelöscht wird
+printf '#!/bin/sh\n[ -x "%s/run.sh" ] && exec "%s/run.sh" "$@"\nexec /usr/bin/postfach "$@"\n' "$here" "$here" > "$bindir/postfach"
 chmod +x "$bindir/postfach"
 gtk-update-icon-cache -q -t "$data/icons/hicolor" 2>/dev/null || true
 update-desktop-database -q "$apps" 2>/dev/null || true

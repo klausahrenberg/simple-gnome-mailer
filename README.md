@@ -26,6 +26,10 @@ Schlanker, moderner Mail-Client für GNOME (Python · GTK4 · libadwaita · WebK
     cd packaging/arch && makepkg -f
     sudo pacman -U postfach-0.1.0-1-any.pkg.tar.zst
 
+Wurde Postfach zuvor mit `./install.sh` eingerichtet und der Projektordner danach gelöscht, überdeckt der alte Starter in
+`~/.local/bin/postfach` den Paket-Befehl („run.sh: Datei oder Verzeichnis nicht gefunden“). Entfernen:
+`rm -f ~/.local/bin/postfach ~/.local/share/applications/eu.ahrenberg.mail.desktop ~/.local/share/icons/hicolor/scalable/apps/eu.ahrenberg.mail*.svg`.
+
 Das Paket installiert den Befehl `postfach`, den Starter `eu.ahrenberg.mail`, die Icons und die AppStream-Metadaten
 (Anzeige in GNOME Software unter „Installiert“). Optionale Pakete: `gnome-online-accounts`, `evolution-data-server`,
 `gnome-shell-extension-appindicator`. Vorher ggf. die Benutzer-Installation entfernen: `./install.sh --uninstall`.
