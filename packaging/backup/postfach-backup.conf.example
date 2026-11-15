@@ -1,0 +1,17 @@
+# ~/.config/postfach/backup.conf – alles optional
+
+# Wohin der Schnappschuss kommt (eine Datei mail.db, wird jede Nacht ersetzt). Diesen Ordner NICHT mit Syncthing
+# live synchronisieren, oder höchstens einmal täglich scannen lassen.
+#BACKUP_DIR="$HOME/Backups/postfach"
+
+# Datenbank, falls sie nicht im in Postfach eingestellten Datenordner liegt
+#DB="$HOME/.local/share/postfach/mail.db"
+
+# Zusätzlich restic: verschlüsselt, nur geänderte Teile werden übertragen, mit Versionen.
+# Beispiel für einen eigenen Server per SSH (SFTP); die Passwortdatei einmalig anlegen:
+#   install -m 600 /dev/null ~/.config/postfach/restic-passwort && echo 'langes-geheimes-passwort' > ~/.config/postfach/restic-passwort
+#RESTIC_REPOSITORY="sftp:benutzer@server:/pfad/zu/backups/postfach"
+#RESTIC_PASSWORD_FILE="$HOME/.config/postfach/restic-passwort"
+#KEEP_DAILY=7
+#KEEP_WEEKLY=4
+#KEEP_MONTHLY=6

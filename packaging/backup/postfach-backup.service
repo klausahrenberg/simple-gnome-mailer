@@ -1,0 +1,10 @@
+[Unit]
+Description=Postfach: Schnappschuss der Datenbank erstellen (und optional per restic sichern)
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/postfach-backup
+# das Backup soll den Rechner nicht spürbar belasten
+Nice=19
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle

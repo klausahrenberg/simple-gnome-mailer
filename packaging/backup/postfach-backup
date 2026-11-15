@@ -1,0 +1,57 @@
+#!/bin/sh
+# Postfach: konsistenter Schnappschuss der Datenbank (läuft sicher, während die App geöffnet ist) und optional ein
+# verschlüsseltes, deduplizierendes Backup per restic. Einstellungen: ~/.config/postfach/backup.conf
+set -eu
+
+CONF="${POSTFACH_BACKUP_CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/postfach/backup.conf}"
+# shellcheck disable=SC1090
+[ -f "$CONF" ] && . "$CONF"
+
+# Datenbank finden: DB=… in der Konfiguration, sonst der in Postfach eingestellte Datenordner, sonst Dokumente/Postfach
+if [ -z "${DB:-}" ]; then
+  cfg="${XDG_CONFIG_HOME:-$HOME/.config}/postfach/config.json"
+  dir=""
+  [ -f "$cfg" ] && dir="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("data_dir") or "")' "$cfg" 2>/dev/null || true)"
+  if [ -z "$dir" ]; then
+    docs="$(xdg-user-dir DOCUMENTS 2>/dev/null || echo "$HOME/Documents")"
+    dir="$docs/Postfach"
+  fi
+  DB="$dir/mail.db"
+fi
+[ -f "$DB" ] || { echo "Datenbank nicht gefunden: $DB" >&2; exit 1; }
+
+# Ziel: Unterordner „syncthing-backup“ im Datenordner (im synchronisierten Dokumente-Ordner; die Live-Datenbank selbst steht in
+# der .stignore). Die Arbeitskopie entsteht außerhalb davon, damit Syncthing nie eine halbfertige Datei sieht.
+BACKUP_DIR="${BACKUP_DIR:-$(dirname "$DB")/syncthing-backup}"
+WORK_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/postfach"
+mkdir -p "$BACKUP_DIR" "$WORK_DIR"
+tmp="$WORK_DIR/mail.db.backup-tmp"
+trap 'rm -f "$tmp"' EXIT
+
+# genug Platz? (der Schnappschuss ist so groß wie die Datenbank; der alte bleibt bis zum Ersatz bestehen)
+need_kb=$(( ($(stat -c %s "$DB") + 1048575) / 1024 ))
+for d in "$WORK_DIR" "$BACKUP_DIR"; do
+  avail_kb=$(df --output=avail -k "$d" | tail -1 | tr -d ' ')
+  [ "$avail_kb" -gt "$need_kb" ] || { echo "Zu wenig Platz in $d (${avail_kb} KB frei, ${need_kb} KB nötig)" >&2; exit 1; }
+done
+
+# konsistente Kopie über die SQLite-Sicherungsschnittstelle (berücksichtigt die WAL-Datei, blockiert die App nicht)
+rm -f "$tmp"
+sqlite3 "$DB" ".timeout 60000" ".backup '$tmp'"
+[ "$(sqlite3 "$tmp" 'PRAGMA quick_check;')" = "ok" ] || { echo "Schnappschuss ist beschädigt – verworfen" >&2; exit 1; }
+mv -f "$tmp" "$BACKUP_DIR/mail.db"     # ein Umbenennen: Syncthing sieht die fertige Datei auf einmal
+# Einstellungen sind klein, aber für eine Wiederherstellung nützlich
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/postfach/config.json" ] && cp -f "${XDG_CONFIG_HOME:-$HOME/.config}/postfach/config.json" "$BACKUP_DIR/config.json"
+echo "Schnappschuss: $BACKUP_DIR/mail.db ($(du -h "$BACKUP_DIR/mail.db" | cut -f1))"
+
+# optional: restic (nur die geänderten Teile werden übertragen, verschlüsselt, mit Versionen)
+if [ -n "${RESTIC_REPOSITORY:-}" ]; then
+  command -v restic >/dev/null 2>&1 || { echo "restic ist nicht installiert" >&2; exit 1; }
+  export RESTIC_REPOSITORY RESTIC_PASSWORD_FILE
+  restic snapshots >/dev/null 2>&1 || restic init
+  restic backup --tag postfach --host "$(hostname)" "$BACKUP_DIR/mail.db" "$BACKUP_DIR/config.json"
+  if [ "$(date +%u)" = "7" ]; then          # sonntags alte Versionen ausdünnen
+    restic forget --tag postfach --keep-daily "${KEEP_DAILY:-7}" --keep-weekly "${KEEP_WEEKLY:-4}" \
+           --keep-monthly "${KEEP_MONTHLY:-6}" --prune
+  fi
+fi
