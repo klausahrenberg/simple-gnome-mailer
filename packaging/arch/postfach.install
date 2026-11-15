@@ -1,0 +1,5 @@
+post_install() {
+  echo "Postfach: Wurde das Programm früher mit ./install.sh aus einem Projektordner eingerichtet, überdeckt ein alter Starter"
+  echo "          in ~/.local/bin den installierten Befehl (Fehler »run.sh: Datei oder Verzeichnis nicht gefunden«). Entfernen:"
+  echo "          rm -f ~/.local/bin/postfach ~/.local/share/applications/eu.ahrenberg.mail.desktop"
+}
